@@ -1,0 +1,16 @@
+{
+  "name": "Huella — Evidencia fotográfica georreferenciada",
+  "short_name": "Huella",
+  "description": "Captura fotografías con logo, título, clasificación, coordenadas y dirección en el pie de página, aun sin internet.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090D1C",
+  "theme_color": "#4F5BFF",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
