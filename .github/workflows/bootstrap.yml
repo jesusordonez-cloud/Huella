@@ -1,6 +1,6 @@
 name: Instalar Huella desde ZIP
 
-# Segundo disparo de instalación del paquete original
+# Instala el paquete original sin modificar los workflows administrados por GitHub
 on:
   push:
     branches: [main]
@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -a --delete --exclude='.git/' /tmp/huella-src/huella/ ./
+          rsync -a --delete --exclude='.git/' --exclude='.github/workflows/' /tmp/huella-src/huella/ ./
           git status --short
 
       - name: Guardar proyecto extraído en main
