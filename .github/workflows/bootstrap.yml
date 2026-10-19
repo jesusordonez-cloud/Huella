@@ -1,0 +1,73 @@
+name: Instalar Huella desde ZIP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: huella-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  install-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Reconstruir paquete ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .package/chunk*.b64 | tr -d '\n\r' | base64 --decode > /tmp/huella.zip
+          unzip -t /tmp/huella.zip
+          rm -rf /tmp/huella-src
+          mkdir -p /tmp/huella-src
+          unzip -q /tmp/huella.zip -d /tmp/huella-src
+          test -f /tmp/huella-src/huella/index.html
+          test -f /tmp/huella-src/huella/manifest.json
+          test -f /tmp/huella-src/huella/sw.js
+
+      - name: Instalar contenido del paquete
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a --delete --exclude='.git/' /tmp/huella-src/huella/ ./
+          git status --short
+
+      - name: Guardar proyecto extraído en main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Instalar proyecto Huella desde paquete ZIP [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Preparar sitio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar Huella
+        id: deployment
+        uses: actions/deploy-pages@v4
