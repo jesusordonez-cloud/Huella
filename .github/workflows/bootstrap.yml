@@ -1,5 +1,6 @@
 name: Instalar Huella desde ZIP
 
+# Segundo disparo de instalación del paquete original
 on:
   push:
     branches: [main]
