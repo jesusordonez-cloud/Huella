@@ -10,8 +10,8 @@ android {
         applicationId "org.fraacmx.huella"
         minSdk 24
         targetSdk 35
-        versionCode 14
-        versionName "4.2.1"
+        versionCode 15
+        versionName "4.2.2"
     }
 
     buildTypes {
