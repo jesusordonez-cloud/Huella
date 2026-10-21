@@ -6,12 +6,17 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -22,6 +27,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
@@ -44,10 +50,25 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        requestRuntimePermissions();
+        getWindow().setStatusBarColor(Color.rgb(5, 14, 10));
+        getWindow().setNavigationBarColor(Color.rgb(5, 14, 10));
+        if (Build.VERSION.SDK_INT >= 29) {
+            getWindow().setNavigationBarContrastEnforced(false);
+            getWindow().setStatusBarContrastEnforced(false);
+        }
+
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(5, 14, 10));
 
         webView = new WebView(this);
-        setContentView(webView);
+        root.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(root);
+
+        applySystemBarInsets(root);
+        requestRuntimePermissions();
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -58,6 +79,9 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setLoadsImagesAutomatically(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(false);
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -75,9 +99,7 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if ("appassets.androidplatform.net".equals(uri.getHost())) {
-                    return false;
-                }
+                if ("appassets.androidplatform.net".equals(uri.getHost())) return false;
                 if (request.isForMainFrame()) {
                     try {
                         startActivity(new Intent(Intent.ACTION_VIEW, uri));
@@ -126,9 +148,7 @@ public class MainActivity extends Activity {
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
                                              FileChooserParams fileChooserParams) {
-                if (filePathCallback != null) {
-                    filePathCallback.onReceiveValue(null);
-                }
+                if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
                 try {
                     Intent intent = fileChooserParams.createIntent();
@@ -137,7 +157,9 @@ public class MainActivity extends Activity {
                     return true;
                 } catch (Exception e) {
                     filePathCallback = null;
-                    Toast.makeText(MainActivity.this, "No se pudo abrir el selector de imágenes", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this,
+                            "No se pudo abrir el selector de imágenes",
+                            Toast.LENGTH_SHORT).show();
                     return false;
                 }
             }
@@ -146,9 +168,38 @@ public class MainActivity extends Activity {
         webView.loadUrl(APP_URL);
     }
 
+    private void applySystemBarInsets(View root) {
+        root.setOnApplyWindowInsetsListener((v, insets) -> {
+            int left;
+            int top;
+            int right;
+            int bottom;
+
+            if (Build.VERSION.SDK_INT >= 30) {
+                Insets bars = insets.getInsets(
+                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+                );
+                left = bars.left;
+                top = bars.top;
+                right = bars.right;
+                bottom = bars.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+
+            v.setPadding(left, top, right, bottom);
+            return insets;
+        });
+        root.requestApplyInsets();
+    }
+
     private void requestRuntimePermissions() {
         if (Build.VERSION.SDK_INT < 23) return;
         List<String> permissions = new ArrayList<>();
+
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(Manifest.permission.CAMERA);
         }
@@ -159,6 +210,7 @@ public class MainActivity extends Activity {
                 checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
+
         if (!permissions.isEmpty()) {
             requestPermissions(permissions.toArray(new String[0]), REQ_PERMISSIONS);
         }
@@ -201,12 +253,22 @@ public class MainActivity extends Activity {
             try {
                 byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
                 String safeName = sanitizeFileName(fileName);
-                saveToDownloads(safeName, bytes, mimeType == null ? "application/octet-stream" : mimeType);
-                runOnUiThread(() ->
-                        Toast.makeText(MainActivity.this, "Guardado en Descargas/Huella", Toast.LENGTH_SHORT).show());
+                saveToDownloads(
+                        safeName,
+                        bytes,
+                        mimeType == null ? "application/octet-stream" : mimeType
+                );
+                runOnUiThread(() -> Toast.makeText(
+                        MainActivity.this,
+                        "Guardado en Descargas/Huella",
+                        Toast.LENGTH_SHORT
+                ).show());
             } catch (Exception e) {
-                runOnUiThread(() ->
-                        Toast.makeText(MainActivity.this, "No se pudo guardar el archivo", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(
+                        MainActivity.this,
+                        "No se pudo guardar el archivo",
+                        Toast.LENGTH_LONG
+                ).show());
             }
         }
     }
@@ -222,10 +284,15 @@ public class MainActivity extends Activity {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
             values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Huella");
+            values.put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    Environment.DIRECTORY_DOWNLOADS + "/Huella"
+            );
             values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
-            Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            Uri collection = MediaStore.Downloads.getContentUri(
+                    MediaStore.VOLUME_EXTERNAL_PRIMARY
+            );
             Uri uri = resolver.insert(collection, values);
             if (uri == null) throw new IllegalStateException("No se pudo crear el archivo");
 
@@ -239,16 +306,20 @@ public class MainActivity extends Activity {
             done.put(MediaStore.MediaColumns.IS_PENDING, 0);
             resolver.update(uri, done, null, null);
         } else {
-            File root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File root = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS
+            );
             File folder = new File(root, "Huella");
             if (!folder.exists() && !folder.mkdirs()) {
                 throw new IllegalStateException("No se pudo crear la carpeta");
             }
+
             File file = new File(folder, fileName);
             try (FileOutputStream out = new FileOutputStream(file)) {
                 out.write(data);
                 out.flush();
             }
+
             Intent scan = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             scan.setData(Uri.fromFile(file));
             sendBroadcast(scan);
