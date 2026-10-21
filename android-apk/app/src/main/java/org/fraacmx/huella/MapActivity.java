@@ -63,9 +63,14 @@ public class MapActivity extends Activity {
                                 .build()
                 ))
                 .build();
-        HttpRequestUtil.setOkHttpClient(client);
-
-        MapLibre.getInstance(this);
+        try {
+            HttpRequestUtil.setOkHttpClient(client);
+            MapLibre.getInstance(this);
+        } catch (Throwable error) {
+            Toast.makeText(this, "No se pudo iniciar el motor del mapa", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(5, 14, 10));
@@ -174,20 +179,30 @@ public class MapActivity extends Activity {
 
         setContentView(root);
 
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(mapLibreMap -> {
-            map = mapLibreMap;
-            map.setStyle(STYLE_URL, style -> {
-                LatLng here = new LatLng(latitude, longitude);
-                map.setCameraPosition(new CameraPosition.Builder()
-                        .target(here)
-                        .zoom(15.5)
-                        .build());
-                map.addMarker(new MarkerOptions()
-                        .position(here)
-                        .title("Ubicación GPS"));
+        try {
+            mapView.onCreate(savedInstanceState);
+            mapView.getMapAsync(mapLibreMap -> {
+                map = mapLibreMap;
+                try {
+                    map.setStyle(STYLE_URL, style -> {
+                        LatLng here = new LatLng(latitude, longitude);
+                        map.setCameraPosition(new CameraPosition.Builder()
+                                .target(here)
+                                .zoom(15.5)
+                                .build());
+                        map.addMarker(new MarkerOptions()
+                                .position(here)
+                                .title("Ubicación GPS"));
+                    });
+                } catch (Throwable error) {
+                    statusText.setText("No se pudo cargar el mapa. Revisa la conexión y vuelve a intentar.");
+                }
             });
-        });
+        } catch (Throwable error) {
+            Toast.makeText(this, "No se pudo abrir el mapa", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         back.setOnClickListener(v -> saveSnapshotAndFinish());
         downloadButton.setOnClickListener(v -> downloadSelectedArea());

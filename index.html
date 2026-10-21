@@ -58,6 +58,8 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 .scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.20);display:none;align-items:flex-end}.scrim.show{display:flex}
 .sheet{width:100%;max-height:74%;overflow:auto;border-radius:29px 29px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.015)),rgba(4,12,9,.50);border:1px solid rgba(255,255,255,.25);box-shadow:0 -24px 70px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(32px) saturate(1.25);-webkit-backdrop-filter:blur(32px) saturate(1.25);padding:12px 18px 18px}.sheetHandle{width:48px;height:4px;border-radius:9px;background:rgba(255,255,255,.34);margin:0 auto 12px}.sheet h2{font-size:18px;margin:0 0 3px}.sheet p{margin:0 0 14px;color:rgba(255,255,255,.62);font-size:11.5px}
 .field{margin:12px 0}.field label{display:block;font-size:10.5px;color:rgba(255,255,255,.66);margin-bottom:5px}.field input,.field select{width:100%;border:1px solid rgba(255,255,255,.20);background:rgba(255,255,255,.045);color:#fff;border-radius:14px;padding:12px 13px;outline:none}.field select option{color:#111}
+.classAddBox{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
+.classAddBox button{min-width:92px;border-radius:14px;border:1px solid rgba(93,255,208,.38);background:rgba(34,201,146,.14);color:#fff;font-weight:800;padding:0 12px}
 .sheetBtns{display:flex;gap:9px;margin-top:14px}.sheetBtn{flex:1;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.23);background:rgba(255,255,255,.055);color:#fff;font-weight:800}.sheetBtn.primary{background:linear-gradient(90deg,rgba(7,136,94,.78),rgba(34,201,146,.68));border-color:rgba(93,255,208,.38)}
 .menuList{display:grid;gap:8px}.menuItem{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:rgba(255,255,255,.035);color:#fff;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 12px}.menuItem svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}.menuItem b{font-size:13px}.menuItem small{display:block;color:rgba(255,255,255,.58);font-size:10px}.menuItem .value{font-size:11px;color:var(--mint);font-weight:800}.menuGroup{margin:12px 0 5px;color:rgba(255,255,255,.52);font-size:9.5px;text-transform:uppercase;letter-spacing:.16em}
 .zoomRow{display:flex;gap:8px}.zoomChoice{flex:1;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.zoomChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
@@ -118,7 +120,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 <div class="scrim" id="dataSheet"><div class="sheet">
  <div class="sheetHandle"></div><h2>Datos de evidencia</h2><p>Solo estos datos se imprimen en la fotografía final.</p>
  <div class="field"><label>Título de la foto</label><input id="title" placeholder="Ej. Asamblea comunitaria"></div>
- <div class="field"><label>Clasificación</label><select id="classSel"><option>Capacitación</option><option>Asamblea</option><option>Taller</option><option>Campo</option><option>Reunión</option><option>Monitoreo</option><option>Otro</option></select></div>
+ <div class="field"><label>Clasificación</label><select id="classSel"><option>Capacitación</option><option>Asamblea</option><option>Taller</option><option>Campo</option><option>Reunión</option><option>Monitoreo</option><option>Otro</option><option value="__add__">＋ Agregar clasificación…</option></select><div id="classAddBox" class="classAddBox hidden"><input id="newClass" maxlength="42" placeholder="Nueva clasificación"><button type="button" id="addClassBtn">Agregar</button></div></div>
  <div class="field"><label>Dirección / lugar</label><input id="address" placeholder="Opcional; el GPS funciona sin internet"></div>
  <div class="sheetBtns"><button class="sheetBtn" data-close="dataSheet">Cancelar</button><button class="sheetBtn primary" id="saveData">Guardar datos</button></div>
 </div></div>
@@ -178,14 +180,63 @@ window.HuellaNativeMapSnapshot=function(dataUrl){
  im.src=dataUrl;
 };
 
+const CLASS_STORE='huella-custom-classes-v1';
+function getCustomClasses(){
+ try{
+  const arr=JSON.parse(localStorage.getItem(CLASS_STORE)||'[]');
+  return Array.isArray(arr)?arr.filter(v=>typeof v==='string'&&v.trim()).map(v=>v.trim()):[];
+ }catch(e){return []}
+}
+function persistCustomClasses(arr){
+ try{localStorage.setItem(CLASS_STORE,JSON.stringify(arr))}catch(e){}
+}
+function insertCustomClass(name){
+ const sel=$('#classSel');
+ const addOpt=sel.querySelector('option[value="__add__"]');
+ const opt=document.createElement('option');
+ opt.value=name; opt.textContent=name; opt.dataset.custom='1';
+ sel.insertBefore(opt,addOpt);
+}
+function loadCustomClasses(){
+ getCustomClasses().forEach(name=>{
+  if(![...$('#classSel').options].some(o=>o.value.toLowerCase()===name.toLowerCase())) insertCustomClass(name);
+ });
+}
+function handleClassSelect(){
+ const sel=$('#classSel'),box=$('#classAddBox');
+ if(sel.value==='__add__'){
+  box.classList.remove('hidden');
+  setTimeout(()=>$('#newClass').focus(),50);
+  return;
+ }
+ box.classList.add('hidden');
+ sync();
+}
+function addCustomClassification(){
+ const input=$('#newClass');
+ const name=input.value.trim().replace(/\s+/g,' ');
+ if(!name){toast('Escribe una clasificación');return}
+ const exists=[...$('#classSel').options].some(o=>o.value!=='__add__'&&o.value.toLowerCase()===name.toLowerCase());
+ if(exists){
+  $('#classSel').value=[...$('#classSel').options].find(o=>o.value.toLowerCase()===name.toLowerCase()).value;
+  input.value=''; $('#classAddBox').classList.add('hidden'); sync(); toast('Clasificación seleccionada'); return;
+ }
+ const customs=getCustomClasses(); customs.push(name); persistCustomClasses(customs); insertCustomClass(name);
+ $('#classSel').value=name; input.value=''; $('#classAddBox').classList.add('hidden'); sync(); toast('Clasificación agregada');
+}
+loadCustomClasses();
+
 function sync(){
- state.title=$('#title').value.trim();state.cls=$('#classSel').value;state.address=$('#address').value.trim();state.quality=+$('#quality').value;
+ state.title=$('#title').value.trim();const selectedClass=$('#classSel').value;if(selectedClass!=='__add__')state.cls=selectedClass;state.address=$('#address').value.trim();state.quality=+$('#quality').value;
  $('#pvTitle').textContent=state.title||'Sin título';
  const coord=geo?geo.lat.toFixed(5)+', '+geo.lon.toFixed(5)+' · ±'+Math.round(geo.acc||0)+' m':'GPS pendiente';
  $('#pvInfo').textContent=coord+' · '+state.cls;
  $('#dataSummary').textContent=state.title||'Datos de evidencia';
 }
-['#title','#classSel','#address','#quality'].forEach(s=>$(s).addEventListener('input',sync));
+['#title','#address','#quality'].forEach(s=>$(s).addEventListener('input',sync));
+$('#classSel').addEventListener('change',handleClassSelect);
+$('#addClassBtn').onclick=addCustomClassification;
+$('#newClass').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCustomClassification()}});
 $('#dataBtn').onclick=()=>openSheet('dataSheet');$('#menuBtn').onclick=()=>openSheet('menuSheet');
 $('#saveData').onclick=()=>{sync();closeSheet('dataSheet');toast('Datos actualizados')};
 

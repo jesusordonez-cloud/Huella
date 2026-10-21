@@ -416,10 +416,24 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void openOfflineMap(double lat, double lon) {
-        Intent intent = new Intent(this, MapActivity.class);
-        intent.putExtra("lat", lat);
-        intent.putExtra("lon", lon);
-        startActivity(intent);
+        try {
+            Intent intent = new Intent(this, MapActivity.class);
+            intent.putExtra("lat", lat);
+            intent.putExtra("lon", lon);
+            startActivity(intent);
+        } catch (Throwable error) {
+            Toast.makeText(
+                    this,
+                    "No se pudo abrir el mapa offline",
+                    Toast.LENGTH_LONG
+            ).show();
+            if (webView != null) {
+                webView.evaluateJavascript(
+                        "window.HuellaOfflineMapError&&window.HuellaOfflineMapError();",
+                        null
+                );
+            }
+        }
     }
 
     private void pushMapSnapshotToWeb() {
