@@ -278,7 +278,7 @@ function drawFooter(x,W,H,fh,map){
  x.fillStyle='rgba(255,255,255,.16)';roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.fill();
  x.save();roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.clip();
  if(map&&map.img){x.drawImage(map.img,mapX,mapY,mapW,mapH);const px=mapX+map.t.fx*mapW,py=mapY+map.t.fy*mapH;x.fillStyle='#FF4E52';x.beginPath();x.arc(px,py,Math.max(7,mapW*.035),0,Math.PI*2);x.fill();x.strokeStyle='#fff';x.lineWidth=Math.max(2,mapW*.008);x.stroke()}
- else{drawOfflineLocator(x,mapW,mapH)}
+ else{x.save();x.translate(mapX,mapY);drawOfflineLocator(x,mapW,mapH);x.restore()}
  x.restore();x.strokeStyle='rgba(255,255,255,.42)';x.lineWidth=1;roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.stroke();x.restore();
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
