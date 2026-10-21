@@ -59,13 +59,19 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 .sheet{width:100%;max-height:74%;overflow:auto;border-radius:29px 29px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.015)),rgba(4,12,9,.50);border:1px solid rgba(255,255,255,.25);box-shadow:0 -24px 70px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(32px) saturate(1.25);-webkit-backdrop-filter:blur(32px) saturate(1.25);padding:12px 18px 18px}.sheetHandle{width:48px;height:4px;border-radius:9px;background:rgba(255,255,255,.34);margin:0 auto 12px}.sheet h2{font-size:18px;margin:0 0 3px}.sheet p{margin:0 0 14px;color:rgba(255,255,255,.62);font-size:11.5px}
 .field{margin:12px 0}.field label{display:block;font-size:10.5px;color:rgba(255,255,255,.66);margin-bottom:5px}.field input,.field select{width:100%;border:1px solid rgba(255,255,255,.20);background:rgba(255,255,255,.045);color:#fff;border-radius:14px;padding:12px 13px;outline:none}.field select option{color:#111}
 .classAddBox{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
+.brandConfig{display:grid;grid-template-columns:58px 1fr;gap:12px;align-items:center;padding:10px;border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.025)}
+.brandLogoPreview{width:58px;height:58px;border-radius:14px;object-fit:contain;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.17);padding:5px}
+.brandLogoPreview.empty{opacity:.42}
+.brandConfigActions{display:flex;gap:7px;margin-top:7px}.brandConfigActions button{flex:1;min-height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.045);color:#fff;font-size:10.5px;font-weight:800}
+.brandConfigActions button.primary{border-color:rgba(93,255,208,.38);background:rgba(34,201,146,.12)}
+.coordGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.coordGrid input{min-width:0}
 .classAddBox button{min-width:92px;border-radius:14px;border:1px solid rgba(93,255,208,.38);background:rgba(34,201,146,.14);color:#fff;font-weight:800;padding:0 12px}
 .sheetBtns{display:flex;gap:9px;margin-top:14px}.sheetBtn{flex:1;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.23);background:rgba(255,255,255,.055);color:#fff;font-weight:800}.sheetBtn.primary{background:linear-gradient(90deg,rgba(7,136,94,.78),rgba(34,201,146,.68));border-color:rgba(93,255,208,.38)}
 .menuList{display:grid;gap:8px}.menuItem{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:rgba(255,255,255,.035);color:#fff;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 12px}.menuItem svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}.menuItem b{font-size:13px}.menuItem small{display:block;color:rgba(255,255,255,.58);font-size:10px}.menuItem .value{font-size:11px;color:var(--mint);font-weight:800}.menuGroup{margin:12px 0 5px;color:rgba(255,255,255,.52);font-size:9.5px;text-transform:uppercase;letter-spacing:.16em}
 .zoomRow{display:flex;gap:8px}.zoomChoice{flex:1;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.zoomChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
 .statusCard{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.15);border-radius:15px;padding:10px 12px;background:rgba(255,255,255,.03)}.statusCard b{font-size:12px}.statusCard small{display:block;color:rgba(255,255,255,.58);font-size:9.5px}.statusDot{font-size:10px;color:var(--mint);font-weight:800}
 .offlineMapView{position:relative;width:100%;aspect-ratio:16/10;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.20);background:rgba(4,14,10,.35);margin:10px 0 12px}.offlineMapView canvas{display:block;width:100%;height:100%}.offlineMapBadge{position:absolute;left:10px;bottom:9px;padding:6px 9px;border-radius:999px;background:rgba(2,10,7,.62);border:1px solid rgba(255,255,255,.19);font-size:9.5px;font-weight:800;backdrop-filter:blur(12px)}
-.radiusRow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:9px 0}.radiusChoice{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.radiusChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
+.radiusRow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:9px 0}.radiusChoice{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.radiusChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
 .mapProgress{height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;margin:10px 0 7px}.mapProgress>i{display:block;width:0;height:100%;background:linear-gradient(90deg,rgba(7,136,94,.95),rgba(92,255,208,.92));border-radius:999px;transition:width .2s ease}
 .toast{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);z-index:60;padding:9px 13px;border-radius:999px;background:rgba(3,10,7,.68);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(18px);font-size:11.5px;font-weight:760;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
 #work{display:none}
@@ -112,12 +118,13 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  </div>
 
  <div class="footerStrip">
-   <div class="fbrand"><img class="logoImg small" src="icons/huella_logo.svg" alt=""><div><div class="logoText">Huella</div></div></div>
+   <div class="fbrand"><img id="pvBrandLogo" class="logoImg small" src="icons/huella_logo.svg" alt=""><div><div id="pvBrandName" class="logoText">Huella</div><div id="pvBrandSub" class="tagMini" style="font-size:6px;letter-spacing:.14em"></div></div></div>
    <div class="divider"></div>
-   <div class="footMeta"><b id="pvTitle">Sin título</b><span id="pvInfo">GPS pendiente · Capacitación</span></div>
+   <div class="footMeta"><b id="pvTitle">Sin título</b><span id="pvInfo">GPS pendiente · Capacitación</span><span id="pvSecondaryBrand"></span></div>
    <canvas id="mapPreview" class="miniMap" width="132" height="96"></canvas>
  </div>
  <input id="filePick" type="file" accept="image/*" hidden>
+ <input id="orgLogoPick" type="file" accept="image/png,image/jpeg,image/webp" hidden>
 </section>
 
 <div class="scrim" id="dataSheet"><div class="sheet">
@@ -125,6 +132,10 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  <div class="field"><label>Título de la foto</label><input id="title" placeholder="Ej. Asamblea comunitaria"></div>
  <div class="field"><label>Clasificación</label><select id="classSel"><option>Capacitación</option><option>Asamblea</option><option>Taller</option><option>Campo</option><option>Reunión</option><option>Monitoreo</option><option>Otro</option><option value="__add__">＋ Agregar clasificación…</option></select><div id="classAddBox" class="classAddBox hidden"><input id="newClass" maxlength="42" placeholder="Nueva clasificación"><button type="button" id="addClassBtn">Agregar</button></div></div>
  <div class="field"><label>Dirección / lugar</label><input id="address" placeholder="Opcional; el GPS funciona sin internet"></div>
+ <div class="menuGroup">Marca en la evidencia</div>
+ <div class="brandConfig"><img id="orgLogoPreview" class="brandLogoPreview empty" src="icons/huella_logo.svg" alt=""><div><b style="font-size:12px">Logo de la organización</b><small style="display:block;color:rgba(255,255,255,.58);font-size:9.5px">Puedes cargar PNG, JPG o WebP. Huella seguirá visible como origen de la fotografía.</small><div class="brandConfigActions"><button type="button" class="primary" id="chooseOrgLogo">Elegir logo</button><button type="button" id="removeOrgLogo">Quitar</button></div></div></div>
+ <div class="field"><label>Nombre de la organización</label><input id="orgName" maxlength="60" placeholder="Ej. Forest Rangers Alliance"></div>
+ <div class="field"><label>Marca principal en la foto</label><select id="brandPriority"><option value="organization">Organización principal · Huella como sello</option><option value="huella">Huella principal · Organización secundaria</option></select></div>
  <div class="sheetBtns"><button class="sheetBtn" data-close="dataSheet">Cancelar</button><button class="sheetBtn primary" id="saveData">Guardar datos</button></div>
 </div></div>
 
@@ -134,7 +145,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
   <button class="menuItem hidden" id="flashItem"><svg viewBox="0 0 24 24"><path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z"/></svg><div><b>Flash continuo</b><small>Antorcha de la cámara</small></div><span class="value" id="flashValue">Apagado</span></button>
  </div>
  <div class="menuGroup">Mapa de evidencia</div>
- <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Ver mapa y descargar 1, 3 o 5 km alrededor del GPS</small></div><span class="value">Abrir</span></button>
+ <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Preparar una zona antes de salir: 5, 10, 25 o 50 km</small></div><span class="value">Abrir</span></button>
  <div class="statusCard" style="margin-top:8px"><div><b>Vista integrada en la evidencia</b><small>Al cerrar el mapa, Huella guarda una vista para anexarla al pie de tus fotografías.</small></div><span class="statusDot" id="mapStatus">Listo</span></div>
  <div class="menuGroup" id="zoomLabel">Zoom disponible</div>
  <div class="zoomRow" id="zoomRow"></div>
@@ -146,9 +157,12 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 <div class="scrim" id="offlineMapSheet"><div class="sheet">
  <div class="sheetHandle"></div><h2>Mapa offline</h2><p>La zona se descarga dentro de Huella. No abre otra aplicación ni otra pantalla de Android.</p>
  <div class="offlineMapView"><canvas id="offlineMapCanvas" width="900" height="560"></canvas><span class="offlineMapBadge" id="offlineMapBadge">GPS pendiente</span></div>
- <div class="statusCard"><div><b id="offlineMapTitle">Ubicación actual</b><small id="offlineMapCoords">Obtén el GPS para preparar el mapa.</small></div><span class="statusDot" id="offlineMapState">Listo</span></div>
+ <div class="statusCard"><div><b id="offlineMapTitle">Centro de descarga</b><small id="offlineMapCoords">Puedes usar tu GPS o escribir las coordenadas del sitio al que viajarás.</small></div><span class="statusDot" id="offlineMapState">Listo</span></div>
+ <div class="menuGroup">Centro de la zona</div>
+ <div class="coordGrid"><div class="field" style="margin:0"><label>Latitud</label><input id="offlineLat" inputmode="decimal" placeholder="18.500000"></div><div class="field" style="margin:0"><label>Longitud</label><input id="offlineLon" inputmode="decimal" placeholder="-89.500000"></div></div>
+ <div class="sheetBtns" style="margin-top:8px"><button class="sheetBtn" id="useCurrentGps">Usar mi GPS actual</button></div>
  <div class="menuGroup">Área a descargar</div>
- <div class="radiusRow"><button class="radiusChoice on" data-map-radius="1">1 km</button><button class="radiusChoice" data-map-radius="3">3 km</button><button class="radiusChoice" data-map-radius="5">5 km</button></div>
+ <div class="radiusRow"><button class="radiusChoice on" data-map-radius="5">5 km</button><button class="radiusChoice" data-map-radius="10">10 km</button><button class="radiusChoice" data-map-radius="25">25 km</button><button class="radiusChoice" data-map-radius="50">50 km</button></div>
  <div class="mapProgress"><i id="offlineMapProgress"></i></div>
  <p id="offlineMapProgressText" style="margin-bottom:8px">Selecciona una zona para guardarla sin internet.</p>
  <div class="sheetBtns"><button class="sheetBtn" id="refreshMapView">Actualizar vista</button><button class="sheetBtn primary" id="downloadMapArea">Descargar zona</button></div>
@@ -158,9 +172,9 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 <div class="toast" id="toast"></div><canvas id="work"></canvas>
 <script>
 (function(){
-const $=s=>document.querySelector(s),video=$('#video'),photoLayer=$('#photoLayer'),filePick=$('#filePick'),work=$('#work'),mapPreview=$('#mapPreview');
+const $=s=>document.querySelector(s),video=$('#video'),photoLayer=$('#photoLayer'),filePick=$('#filePick'),orgLogoPick=$('#orgLogoPick'),work=$('#work'),mapPreview=$('#mapPreview');
 let stream=null,facing='environment',geo=null,track=null,caps={},loadedImage=null,digitalZoom=1,torch=false,rearDevices=[],ultraDevice=null,mapTile=null,mapTileMeta=null,nativeMapSnapshot=null,biometricAvailable=false;
-const state={title:'',cls:'Capacitación',address:'',quality:.98};
+const state={title:'',cls:'Capacitación',address:'',quality:.98,orgName:'',orgLogoData:'',brandPriority:'organization'};
 const MAP_Z=15,MAP_CACHE='huella-map-v1';
 
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1900)}
@@ -199,7 +213,7 @@ window.HuellaNativeMapSnapshot=function(dataUrl){
  };
  im.src=dataUrl;
 };
-let offlineRadius=1;
+const MAP_PLAN_STORE='huella-offline-plan-v1';let offlineRadius=5;
 window.HuellaOfflineDownloadProgress=function(percent,mb,status){
  const pct=Math.max(0,Math.min(100,Number(percent)||0));
  $('#offlineMapProgress').style.width=pct+'%';
@@ -211,6 +225,24 @@ window.HuellaOfflineMapError=function(msg){
  $('#offlineMapProgressText').textContent=msg||'No se pudo preparar el mapa.';
  toast(msg||'No se pudo preparar el mapa');
 };
+function getOfflineTarget(){
+ const lat=Number(String($('#offlineLat').value).replace(',','.'));
+ const lon=Number(String($('#offlineLon').value).replace(',','.'));
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180)return null;
+ return{lat,lon};
+}
+function saveOfflinePlan(){
+ const t=getOfflineTarget();if(!t)return;
+ try{localStorage.setItem(MAP_PLAN_STORE,JSON.stringify({lat:t.lat,lon:t.lon,radius:offlineRadius}))}catch(e){}
+}
+function loadOfflinePlan(){
+ try{
+  const p=JSON.parse(localStorage.getItem(MAP_PLAN_STORE)||'{}');
+  if(Number.isFinite(p.lat)&&Number.isFinite(p.lon)){ $('#offlineLat').value=Number(p.lat).toFixed(6);$('#offlineLon').value=Number(p.lon).toFixed(6) }
+  if([5,10,25,50].includes(Number(p.radius)))offlineRadius=Number(p.radius);
+ }catch(e){}
+ document.querySelectorAll('[data-map-radius]').forEach(b=>b.classList.toggle('on',Number(b.dataset.mapRadius)===offlineRadius));
+}
 function renderOfflineMapPanel(){
  const canvas=$('#offlineMapCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
  ctx.clearRect(0,0,w,h);
@@ -219,29 +251,68 @@ function renderOfflineMapPanel(){
   ctx.fillStyle='rgba(0,0,0,.44)';ctx.fillRect(0,h-34,w,34);
   ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='18px system-ui';ctx.fillText('OpenFreeMap · © OpenStreetMap contributors',16,h-11);
   $('#offlineMapBadge').textContent='Vista de mapa';
- }else{
-  drawOfflineLocator(ctx,w,h);
-  $('#offlineMapBadge').textContent=geo?'GPS offline':'GPS pendiente';
- }
- $('#offlineMapCoords').textContent=geo?(geo.lat.toFixed(6)+', '+geo.lon.toFixed(6)+' · ±'+Math.round(geo.acc||0)+' m'):'Obtén el GPS para preparar el mapa.';
+ }else{drawOfflineLocator(ctx,w,h);$('#offlineMapBadge').textContent='Mapa preparado offline'}
+ const t=getOfflineTarget();
+ $('#offlineMapCoords').textContent=t?(t.lat.toFixed(6)+', '+t.lon.toFixed(6)+' · cobertura '+offlineRadius+' km'):'Escribe las coordenadas del sitio o usa tu GPS actual.';
 }
 function openOfflineMapPanel(){
- if(!geo){
-  gps();
-  toast('Obteniendo GPS…');
-  return;
- }
- closeSheet('menuSheet');
- openSheet('offlineMapSheet');
+ closeSheet('menuSheet');openSheet('offlineMapSheet');loadOfflinePlan();
+ if(!getOfflineTarget()&&geo){$('#offlineLat').value=geo.lat.toFixed(6);$('#offlineLon').value=geo.lon.toFixed(6)}
  renderOfflineMapPanel();
- $('#offlineMapState').textContent='Listo';
- $('#offlineMapProgress').style.width='0%';
- $('#offlineMapProgressText').textContent='Puedes actualizar la vista o descargar la zona.';
- setTimeout(()=>{
-  if(window.HuellaAndroid&&typeof window.HuellaAndroid.requestMapSnapshot==='function'){
-   window.HuellaAndroid.requestMapSnapshot(geo.lat,geo.lon);
-  }
- },120);
+ $('#offlineMapState').textContent='Listo';$('#offlineMapProgress').style.width='0%';
+ $('#offlineMapProgressText').textContent='Prepara aquí la zona antes de salir a campo.';
+ const t=getOfflineTarget();
+ if(t&&window.HuellaAndroid&&typeof window.HuellaAndroid.requestMapSnapshot==='function')setTimeout(()=>window.HuellaAndroid.requestMapSnapshot(t.lat,t.lon),120);
+}
+
+const BRAND_STORE='huella-brand-v1';
+const huellaBrandImg=new Image();huellaBrandImg.src='icons/huella_logo.svg';
+let orgBrandImg=null;
+function loadBrandConfig(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(BRAND_STORE)||'{}');
+  state.orgName=typeof saved.orgName==='string'?saved.orgName:'';
+  state.orgLogoData=typeof saved.orgLogoData==='string'?saved.orgLogoData:'';
+  state.brandPriority=saved.brandPriority==='huella'?'huella':'organization';
+ }catch(e){}
+ $('#orgName').value=state.orgName;
+ $('#brandPriority').value=state.brandPriority;
+ if(state.orgLogoData){
+  orgBrandImg=new Image();
+  orgBrandImg.onload=()=>{updateBrandPreview()};
+  orgBrandImg.src=state.orgLogoData;
+  $('#orgLogoPreview').src=state.orgLogoData;$('#orgLogoPreview').classList.remove('empty');
+ }
+ updateBrandPreview();
+}
+function persistBrandConfig(){
+ try{localStorage.setItem(BRAND_STORE,JSON.stringify({orgName:state.orgName,orgLogoData:state.orgLogoData,brandPriority:state.brandPriority}))}catch(e){}
+}
+function updateBrandPreview(){
+ const hasOrg=!!(state.orgLogoData||state.orgName);
+ const orgPrimary=hasOrg&&state.brandPriority==='organization';
+ $('#pvBrandLogo').src=orgPrimary&&state.orgLogoData?state.orgLogoData:'icons/huella_logo.svg';
+ $('#pvBrandName').textContent=orgPrimary?(state.orgName||'Organización'):'Huella';
+ $('#pvBrandSub').textContent=orgPrimary?'':'';
+ $('#pvSecondaryBrand').textContent=hasOrg?(orgPrimary?'Origen: Huella':'Organización: '+(state.orgName||'Logo institucional')):'';
+}
+function processOrgLogo(file){
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  const im=new Image();
+  im.onload=()=>{
+   const max=720,k=Math.min(1,max/Math.max(im.width,im.height));
+   const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(im.width*k));cv.height=Math.max(1,Math.round(im.height*k));
+   const cx=cv.getContext('2d');cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
+   state.orgLogoData=cv.toDataURL('image/png');
+   orgBrandImg=new Image();orgBrandImg.onload=updateBrandPreview;orgBrandImg.src=state.orgLogoData;
+   $('#orgLogoPreview').src=state.orgLogoData;$('#orgLogoPreview').classList.remove('empty');
+   persistBrandConfig();updateBrandPreview();toast('Logo de organización guardado');
+  };
+  im.src=reader.result;
+ };
+ reader.readAsDataURL(file);
 }
 
 const CLASS_STORE='huella-custom-classes-v1';
@@ -291,7 +362,7 @@ function addCustomClassification(){
 loadCustomClasses();
 
 function sync(){
- state.title=$('#title').value.trim();const selectedClass=$('#classSel').value;if(selectedClass!=='__add__')state.cls=selectedClass;state.address=$('#address').value.trim();state.quality=+$('#quality').value;
+ state.title=$('#title').value.trim();const selectedClass=$('#classSel').value;if(selectedClass!=='__add__')state.cls=selectedClass;state.address=$('#address').value.trim();state.quality=+$('#quality').value;state.orgName=$('#orgName').value.trim();state.brandPriority=$('#brandPriority').value==='huella'?'huella':'organization';persistBrandConfig();updateBrandPreview();
  $('#pvTitle').textContent=state.title||'Sin título';
  const coord=geo?geo.lat.toFixed(5)+', '+geo.lon.toFixed(5)+' · ±'+Math.round(geo.acc||0)+' m':'GPS pendiente';
  $('#pvInfo').textContent=coord+' · '+state.cls;
@@ -301,6 +372,11 @@ function sync(){
 $('#classSel').addEventListener('change',handleClassSelect);
 $('#addClassBtn').onclick=addCustomClassification;
 $('#newClass').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCustomClassification()}});
+$('#chooseOrgLogo').onclick=()=>orgLogoPick.click();
+$('#removeOrgLogo').onclick=()=>{state.orgLogoData='';orgBrandImg=null;$('#orgLogoPreview').src='icons/huella_logo.svg';$('#orgLogoPreview').classList.add('empty');persistBrandConfig();updateBrandPreview();toast('Logo de organización eliminado')};
+orgLogoPick.onchange=e=>{const file=e.target.files&&e.target.files[0];processOrgLogo(file);e.target.value=''};
+$('#orgName').addEventListener('input',()=>{state.orgName=$('#orgName').value.trim();persistBrandConfig();updateBrandPreview()});
+$('#brandPriority').addEventListener('change',()=>{state.brandPriority=$('#brandPriority').value==='huella'?'huella':'organization';persistBrandConfig();updateBrandPreview()});
 $('#dataBtn').onclick=()=>openSheet('dataSheet');$('#menuBtn').onclick=()=>openSheet('menuSheet');
 $('#saveData').onclick=()=>{sync();closeSheet('dataSheet');toast('Datos actualizados')};
 
@@ -358,7 +434,7 @@ function setGeo(lat,lon,acc,src){
  biometricAvailable=!!(window.HuellaAndroid&&typeof window.HuellaAndroid.biometricAvailable==='function'&&window.HuellaAndroid.biometricAvailable());
 }catch(e){biometricAvailable=false}
 updateBiometricButton();
-sync();renderMapPreview();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
+loadBrandConfig();sync();renderMapPreview();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
 }
 function gps(){
  $('#gpsText').textContent='Buscando GPS…';
@@ -413,25 +489,22 @@ $('#startBtn').onclick=()=>{
  }else enterApp();
 };
 $('#offlineMapItem').onclick=openOfflineMapPanel;
-document.querySelectorAll('[data-map-radius]').forEach(btn=>btn.onclick=()=>{
- offlineRadius=Number(btn.dataset.mapRadius)||1;
- document.querySelectorAll('[data-map-radius]').forEach(b=>b.classList.toggle('on',b===btn));
-});
+document.querySelectorAll('[data-map-radius]').forEach(btn=>btn.onclick=()=>{offlineRadius=Number(btn.dataset.mapRadius)||5;document.querySelectorAll('[data-map-radius]').forEach(b=>b.classList.toggle('on',b===btn));saveOfflinePlan();renderOfflineMapPanel()});
+$('#useCurrentGps').onclick=()=>{if(!geo){gps();toast('Obteniendo GPS…');return}$('#offlineLat').value=geo.lat.toFixed(6);$('#offlineLon').value=geo.lon.toFixed(6);saveOfflinePlan();renderOfflineMapPanel();toast('Centro actualizado con tu GPS')};
+['#offlineLat','#offlineLon'].forEach(s=>$(s).addEventListener('input',()=>{saveOfflinePlan();renderOfflineMapPanel()}));
 $('#downloadMapArea').onclick=()=>{
- if(!geo){gps();toast('Primero obtén el GPS');return}
+ const t=getOfflineTarget();if(!t){toast('Escribe coordenadas válidas');return}
+ saveOfflinePlan();
  if(window.HuellaAndroid&&typeof window.HuellaAndroid.downloadOfflineMap==='function'){
-  $('#offlineMapState').textContent='Preparando';
-  $('#offlineMapProgress').style.width='0%';
-  $('#offlineMapProgressText').textContent='Preparando descarga…';
-  window.HuellaAndroid.downloadOfflineMap(geo.lat,geo.lon,offlineRadius);
+  $('#offlineMapState').textContent='Preparando';$('#offlineMapProgress').style.width='0%';$('#offlineMapProgressText').textContent='Preparando descarga…';
+  window.HuellaAndroid.downloadOfflineMap(t.lat,t.lon,offlineRadius);
  }else toast('La descarga offline está disponible en la APK');
 };
 $('#refreshMapView').onclick=()=>{
- if(!geo){gps();return}
+ const t=getOfflineTarget();if(!t){toast('Escribe coordenadas válidas');return}
+ saveOfflinePlan();
  if(window.HuellaAndroid&&typeof window.HuellaAndroid.requestMapSnapshot==='function'){
-  $('#offlineMapState').textContent='Cargando';
-  $('#offlineMapProgressText').textContent='Preparando vista del mapa…';
-  window.HuellaAndroid.requestMapSnapshot(geo.lat,geo.lon);
+  $('#offlineMapState').textContent='Cargando';$('#offlineMapProgressText').textContent='Preparando vista del mapa…';window.HuellaAndroid.requestMapSnapshot(t.lat,t.lon);
  }else renderOfflineMapPanel();
 };
 
@@ -452,9 +525,21 @@ async function exportPhoto(src,map){
 function drawFooter(x,W,H,fh,map){
  const y=H-fh,p=Math.max(22,W*.021);x.save();const g=x.createLinearGradient(0,y,0,H);g.addColorStop(0,'rgba(3,12,9,.69)');g.addColorStop(1,'rgba(2,8,6,.94)');x.fillStyle=g;x.fillRect(0,y,W,fh);x.fillStyle='#5CFFD0';x.fillRect(0,y,Math.max(6,W*.0035),fh);
  const left=Math.round(W*.21),mapW=Math.round(W*.22),mapX=W-mapW-p,mapY=y+Math.round(fh*.12),mapH=Math.round(fh*.76);
- x.fillStyle='#fff';x.font='850 '+Math.max(30,fh*.18)+'px system-ui';x.fillText('Huella',p,y+fh*.34);x.font='700 '+Math.max(13,fh*.068)+'px system-ui';x.fillStyle='#5CFFD0';x.fillText('FOTOGRAFÍA QUE DEJA EVIDENCIA',p,y+fh*.55);
+ const hasOrg=!!(state.orgLogoData||state.orgName),orgPrimary=hasOrg&&state.brandPriority==='organization';
+ const brandImg=orgPrimary?orgBrandImg:huellaBrandImg,brandName=orgPrimary?(state.orgName||'Organización'):'Huella';
+ if(brandImg&&brandImg.complete&&brandImg.naturalWidth){
+  const boxW=Math.max(54,left*.30),boxH=fh*.48,ratio=Math.min(boxW/brandImg.naturalWidth,boxH/brandImg.naturalHeight),dw=brandImg.naturalWidth*ratio,dh=brandImg.naturalHeight*ratio;
+  x.drawImage(brandImg,p,y+fh*.14,dw,dh);
+  x.fillStyle='#fff';x.font='800 '+Math.max(19,fh*.10)+'px system-ui';x.fillText(fit(x,brandName,left-p-dw-12),p+dw+12,y+fh*.31);
+ }else{x.fillStyle='#fff';x.font='850 '+Math.max(28,fh*.16)+'px system-ui';x.fillText(fit(x,brandName,left-p),p,y+fh*.33)}
+ x.font='700 '+Math.max(12,fh*.064)+'px system-ui';x.fillStyle='#5CFFD0';
+ x.fillText(orgPrimary?'ORIGEN: HUELLA · FOTOGRAFÍA QUE DEJA EVIDENCIA':(hasOrg?'ORGANIZACIÓN: '+(state.orgName||'LOGO INSTITUCIONAL'):'FOTOGRAFÍA QUE DEJA EVIDENCIA'),p,y+fh*.58);
  x.fillStyle='rgba(255,255,255,.32)';x.fillRect(left,y+fh*.12,1,fh*.74);const sm=Math.max(17,fh*.092);x.fillStyle='#fff';x.font='800 '+Math.max(22,fh*.12)+'px system-ui';x.fillText(fit(x,state.title||'Sin título',mapX-left-p*2),left+p,y+fh*.22);x.font='600 '+sm+'px system-ui';x.fillText(state.cls,left+p,y+fh*.40);x.fillText(dateText(),left+p,y+fh*.57);
  const coord=geo?geo.lat.toFixed(6)+', '+geo.lon.toFixed(6)+'  ±'+Math.round(geo.acc||0)+' m':'Sin coordenadas';x.fillText(fit(x,coord,mapX-left-p*2),left+p,y+fh*.74);
+ if(hasOrg&&!orgPrimary&&orgBrandImg&&orgBrandImg.complete&&orgBrandImg.naturalWidth){
+  const ow=Math.min(mapW*.30,fh*.24),or=ow/orgBrandImg.naturalWidth,oh=orgBrandImg.naturalHeight*or;
+  x.drawImage(orgBrandImg,mapX-ow-p*.45,y+fh*.13,ow,Math.min(oh,fh*.28));
+ }
  x.fillStyle='rgba(255,255,255,.16)';roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.fill();
  x.save();roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.clip();
  if(map&&map.snapshot){
