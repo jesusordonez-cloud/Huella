@@ -64,6 +64,9 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 .menuList{display:grid;gap:8px}.menuItem{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:rgba(255,255,255,.035);color:#fff;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 12px}.menuItem svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}.menuItem b{font-size:13px}.menuItem small{display:block;color:rgba(255,255,255,.58);font-size:10px}.menuItem .value{font-size:11px;color:var(--mint);font-weight:800}.menuGroup{margin:12px 0 5px;color:rgba(255,255,255,.52);font-size:9.5px;text-transform:uppercase;letter-spacing:.16em}
 .zoomRow{display:flex;gap:8px}.zoomChoice{flex:1;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.zoomChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
 .statusCard{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.15);border-radius:15px;padding:10px 12px;background:rgba(255,255,255,.03)}.statusCard b{font-size:12px}.statusCard small{display:block;color:rgba(255,255,255,.58);font-size:9.5px}.statusDot{font-size:10px;color:var(--mint);font-weight:800}
+.offlineMapView{position:relative;width:100%;aspect-ratio:16/10;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.20);background:rgba(4,14,10,.35);margin:10px 0 12px}.offlineMapView canvas{display:block;width:100%;height:100%}.offlineMapBadge{position:absolute;left:10px;bottom:9px;padding:6px 9px;border-radius:999px;background:rgba(2,10,7,.62);border:1px solid rgba(255,255,255,.19);font-size:9.5px;font-weight:800;backdrop-filter:blur(12px)}
+.radiusRow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:9px 0}.radiusChoice{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.radiusChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
+.mapProgress{height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;margin:10px 0 7px}.mapProgress>i{display:block;width:0;height:100%;background:linear-gradient(90deg,rgba(7,136,94,.95),rgba(92,255,208,.92));border-radius:999px;transition:width .2s ease}
 .toast{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);z-index:60;padding:9px 13px;border-radius:999px;background:rgba(3,10,7,.68);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(18px);font-size:11.5px;font-weight:760;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
 #work{display:none}
 @media(max-height:720px){.introFrame{align-items:flex-start}.introCard{padding-top:22px}.brandHero{margin-bottom:14px}.trustRow{padding:7px 0}.sub{margin-bottom:13px}.dataPill{bottom:164px}.captureBar{bottom:73px}}
@@ -140,6 +143,18 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  <div class="sheetBtns"><button class="sheetBtn primary" data-close="menuSheet">Listo</button></div>
 </div></div>
 
+<div class="scrim" id="offlineMapSheet"><div class="sheet">
+ <div class="sheetHandle"></div><h2>Mapa offline</h2><p>La zona se descarga dentro de Huella. No abre otra aplicación ni otra pantalla de Android.</p>
+ <div class="offlineMapView"><canvas id="offlineMapCanvas" width="900" height="560"></canvas><span class="offlineMapBadge" id="offlineMapBadge">GPS pendiente</span></div>
+ <div class="statusCard"><div><b id="offlineMapTitle">Ubicación actual</b><small id="offlineMapCoords">Obtén el GPS para preparar el mapa.</small></div><span class="statusDot" id="offlineMapState">Listo</span></div>
+ <div class="menuGroup">Área a descargar</div>
+ <div class="radiusRow"><button class="radiusChoice on" data-map-radius="1">1 km</button><button class="radiusChoice" data-map-radius="3">3 km</button><button class="radiusChoice" data-map-radius="5">5 km</button></div>
+ <div class="mapProgress"><i id="offlineMapProgress"></i></div>
+ <p id="offlineMapProgressText" style="margin-bottom:8px">Selecciona una zona para guardarla sin internet.</p>
+ <div class="sheetBtns"><button class="sheetBtn" id="refreshMapView">Actualizar vista</button><button class="sheetBtn primary" id="downloadMapArea">Descargar zona</button></div>
+ <div class="sheetBtns"><button class="sheetBtn primary" data-close="offlineMapSheet">Cerrar</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div><canvas id="work"></canvas>
 <script>
 (function(){
@@ -176,9 +191,58 @@ window.HuellaBiometricUnavailable=function(){biometricAvailable=false;updateBiom
 window.HuellaBiometricError=function(msg){toast(msg||'No se pudo validar la huella')};
 window.HuellaNativeMapSnapshot=function(dataUrl){
  const im=new Image();
- im.onload=function(){nativeMapSnapshot=im;$('#mapStatus').textContent='Vista guardada';renderMapPreview()};
+ im.onload=function(){
+  nativeMapSnapshot=im;
+  $('#mapStatus').textContent='Vista guardada';
+  renderMapPreview();
+  renderOfflineMapPanel();
+ };
  im.src=dataUrl;
 };
+let offlineRadius=1;
+window.HuellaOfflineDownloadProgress=function(percent,mb,status){
+ const pct=Math.max(0,Math.min(100,Number(percent)||0));
+ $('#offlineMapProgress').style.width=pct+'%';
+ $('#offlineMapProgressText').textContent=(status||'Procesando…')+(mb>0?' · '+Number(mb).toFixed(1)+' MB':'');
+ $('#offlineMapState').textContent=pct>=100?'Listo':(pct>0?pct+'%':'Preparando');
+};
+window.HuellaOfflineMapError=function(msg){
+ $('#offlineMapState').textContent='Error';
+ $('#offlineMapProgressText').textContent=msg||'No se pudo preparar el mapa.';
+ toast(msg||'No se pudo preparar el mapa');
+};
+function renderOfflineMapPanel(){
+ const canvas=$('#offlineMapCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);
+ if(nativeMapSnapshot){
+  ctx.drawImage(nativeMapSnapshot,0,0,w,h);
+  ctx.fillStyle='rgba(0,0,0,.44)';ctx.fillRect(0,h-34,w,34);
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='18px system-ui';ctx.fillText('OpenFreeMap · © OpenStreetMap contributors',16,h-11);
+  $('#offlineMapBadge').textContent='Vista de mapa';
+ }else{
+  drawOfflineLocator(ctx,w,h);
+  $('#offlineMapBadge').textContent=geo?'GPS offline':'GPS pendiente';
+ }
+ $('#offlineMapCoords').textContent=geo?(geo.lat.toFixed(6)+', '+geo.lon.toFixed(6)+' · ±'+Math.round(geo.acc||0)+' m'):'Obtén el GPS para preparar el mapa.';
+}
+function openOfflineMapPanel(){
+ if(!geo){
+  gps();
+  toast('Obteniendo GPS…');
+  return;
+ }
+ closeSheet('menuSheet');
+ openSheet('offlineMapSheet');
+ renderOfflineMapPanel();
+ $('#offlineMapState').textContent='Listo';
+ $('#offlineMapProgress').style.width='0%';
+ $('#offlineMapProgressText').textContent='Puedes actualizar la vista o descargar la zona.';
+ setTimeout(()=>{
+  if(window.HuellaAndroid&&typeof window.HuellaAndroid.requestMapSnapshot==='function'){
+   window.HuellaAndroid.requestMapSnapshot(geo.lat,geo.lon);
+  }
+ },120);
+}
 
 const CLASS_STORE='huella-custom-classes-v1';
 function getCustomClasses(){
@@ -348,12 +412,27 @@ $('#startBtn').onclick=()=>{
   window.HuellaAndroid.requestBiometric();
  }else enterApp();
 };
-$('#offlineMapItem').onclick=()=>{
- if(!geo){gps();toast('Obteniendo GPS antes de abrir el mapa…');return}
- if(window.HuellaAndroid&&typeof window.HuellaAndroid.openOfflineMap==='function'){
-  closeSheet('menuSheet');
-  window.HuellaAndroid.openOfflineMap(geo.lat,geo.lon);
- }else toast('El visor offline está disponible en la APK');
+$('#offlineMapItem').onclick=openOfflineMapPanel;
+document.querySelectorAll('[data-map-radius]').forEach(btn=>btn.onclick=()=>{
+ offlineRadius=Number(btn.dataset.mapRadius)||1;
+ document.querySelectorAll('[data-map-radius]').forEach(b=>b.classList.toggle('on',b===btn));
+});
+$('#downloadMapArea').onclick=()=>{
+ if(!geo){gps();toast('Primero obtén el GPS');return}
+ if(window.HuellaAndroid&&typeof window.HuellaAndroid.downloadOfflineMap==='function'){
+  $('#offlineMapState').textContent='Preparando';
+  $('#offlineMapProgress').style.width='0%';
+  $('#offlineMapProgressText').textContent='Preparando descarga…';
+  window.HuellaAndroid.downloadOfflineMap(geo.lat,geo.lon,offlineRadius);
+ }else toast('La descarga offline está disponible en la APK');
+};
+$('#refreshMapView').onclick=()=>{
+ if(!geo){gps();return}
+ if(window.HuellaAndroid&&typeof window.HuellaAndroid.requestMapSnapshot==='function'){
+  $('#offlineMapState').textContent='Cargando';
+  $('#offlineMapProgressText').textContent='Preparando vista del mapa…';
+  window.HuellaAndroid.requestMapSnapshot(geo.lat,geo.lon);
+ }else renderOfflineMapPanel();
 };
 
 async function captureSource(){
@@ -395,7 +474,7 @@ async function deliver(blob){
 }
 function to64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
 sync();renderMapPreview();
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if(!window.HuellaAndroid&&'serviceWorker'in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 })();
 </script>
 </div>
