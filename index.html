@@ -71,7 +71,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 .zoomRow{display:flex;gap:8px}.zoomChoice{flex:1;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.zoomChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
 .statusCard{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.15);border-radius:15px;padding:10px 12px;background:rgba(255,255,255,.03)}.statusCard b{font-size:12px}.statusCard small{display:block;color:rgba(255,255,255,.58);font-size:9.5px}.statusDot{font-size:10px;color:var(--mint);font-weight:800}
 .offlineMapView{position:relative;width:100%;aspect-ratio:16/10;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.20);background:rgba(4,14,10,.35);margin:10px 0 12px}.offlineMapView canvas{display:block;width:100%;height:100%}.offlineMapBadge{position:absolute;left:10px;bottom:9px;padding:6px 9px;border-radius:999px;background:rgba(2,10,7,.62);border:1px solid rgba(255,255,255,.19);font-size:9.5px;font-weight:800;backdrop-filter:blur(12px)}
-.radiusRow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:9px 0}.radiusChoice{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.radiusChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
+.radiusRow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:9px 0}.radiusChoice{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font-weight:800}.radiusChoice.on{color:var(--mint);border-color:rgba(84,244,190,.60);background:rgba(84,244,190,.08)}
 .mapProgress{height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;margin:10px 0 7px}.mapProgress>i{display:block;width:0;height:100%;background:linear-gradient(90deg,rgba(7,136,94,.95),rgba(92,255,208,.92));border-radius:999px;transition:width .2s ease}
 .toast{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);z-index:60;padding:9px 13px;border-radius:999px;background:rgba(3,10,7,.68);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(18px);font-size:11.5px;font-weight:760;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
 #work{display:none}
@@ -145,7 +145,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
   <button class="menuItem hidden" id="flashItem"><svg viewBox="0 0 24 24"><path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z"/></svg><div><b>Flash continuo</b><small>Antorcha de la cámara</small></div><span class="value" id="flashValue">Apagado</span></button>
  </div>
  <div class="menuGroup">Mapa de evidencia</div>
- <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Preparar una zona antes de salir: 5, 10, 25 o 50 km</small></div><span class="value">Abrir</span></button>
+ <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Preparar una zona antes de salir: hasta 200 km</small></div><span class="value">Abrir</span></button>
  <div class="statusCard" style="margin-top:8px"><div><b>Vista integrada en la evidencia</b><small>Al cerrar el mapa, Huella guarda una vista para anexarla al pie de tus fotografías.</small></div><span class="statusDot" id="mapStatus">Listo</span></div>
  <div class="menuGroup" id="zoomLabel">Zoom disponible</div>
  <div class="zoomRow" id="zoomRow"></div>
@@ -162,7 +162,8 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  <div class="coordGrid"><div class="field" style="margin:0"><label>Latitud</label><input id="offlineLat" inputmode="decimal" placeholder="18.500000"></div><div class="field" style="margin:0"><label>Longitud</label><input id="offlineLon" inputmode="decimal" placeholder="-89.500000"></div></div>
  <div class="sheetBtns" style="margin-top:8px"><button class="sheetBtn" id="useCurrentGps">Usar mi GPS actual</button></div>
  <div class="menuGroup">Área a descargar</div>
- <div class="radiusRow"><button class="radiusChoice on" data-map-radius="5">5 km</button><button class="radiusChoice" data-map-radius="10">10 km</button><button class="radiusChoice" data-map-radius="25">25 km</button><button class="radiusChoice" data-map-radius="50">50 km</button></div>
+ <div class="radiusRow"><button class="radiusChoice on" data-map-radius="5">5 km</button><button class="radiusChoice" data-map-radius="10">10 km</button><button class="radiusChoice" data-map-radius="25">25 km</button><button class="radiusChoice" data-map-radius="50">50 km</button><button class="radiusChoice" data-map-radius="100">100 km</button><button class="radiusChoice" data-map-radius="200">200 km</button></div>
+ <p style="font-size:9.5px;color:rgba(255,255,255,.52);margin-top:3px">En 100 y 200 km Huella reduce automáticamente el nivel de detalle para mantener una descarga offline manejable.</p>
  <div class="mapProgress"><i id="offlineMapProgress"></i></div>
  <p id="offlineMapProgressText" style="margin-bottom:8px">Selecciona una zona para guardarla sin internet.</p>
  <div class="sheetBtns"><button class="sheetBtn" id="refreshMapView">Actualizar vista</button><button class="sheetBtn primary" id="downloadMapArea">Descargar zona</button></div>
@@ -239,7 +240,7 @@ function loadOfflinePlan(){
  try{
   const p=JSON.parse(localStorage.getItem(MAP_PLAN_STORE)||'{}');
   if(Number.isFinite(p.lat)&&Number.isFinite(p.lon)){ $('#offlineLat').value=Number(p.lat).toFixed(6);$('#offlineLon').value=Number(p.lon).toFixed(6) }
-  if([5,10,25,50].includes(Number(p.radius)))offlineRadius=Number(p.radius);
+  if([5,10,25,50,100,200].includes(Number(p.radius)))offlineRadius=Number(p.radius);
  }catch(e){}
  document.querySelectorAll('[data-map-radius]').forEach(b=>b.classList.toggle('on',Number(b.dataset.mapRadius)===offlineRadius));
 }

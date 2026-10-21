@@ -466,7 +466,7 @@ public class MainActivity extends FragmentActivity {
     private void downloadOfflineMap(double lat, double lon, double radiusKm) {
         runOnUiThread(() -> {
             try {
-                double safeRadius = Math.max(1.0, Math.min(50.0, radiusKm));
+                double safeRadius = Math.max(1.0, Math.min(200.0, radiusKm));
                 double latDelta = safeRadius / 111.32;
                 double lonDelta = safeRadius /
                         (111.32 * Math.max(0.2, Math.cos(Math.toRadians(lat))));
@@ -487,9 +487,15 @@ public class MainActivity extends FragmentActivity {
                 } else if (safeRadius <= 25.0) {
                     minZoom = 11.0;
                     maxZoom = 14.0;
-                } else {
+                } else if (safeRadius <= 50.0) {
                     minZoom = 10.0;
                     maxZoom = 13.0;
+                } else if (safeRadius <= 100.0) {
+                    minZoom = 9.0;
+                    maxZoom = 12.0;
+                } else {
+                    minZoom = 8.0;
+                    maxZoom = 11.0;
                 }
 
                 OfflineTilePyramidRegionDefinition definition =
@@ -525,6 +531,16 @@ public class MainActivity extends FragmentActivity {
                                                 : 0;
                                         double mb = status.getCompletedResourceSize() /
                                                 (1024.0 * 1024.0);
+                                        long completedTiles = status.getCompletedTileCount();
+
+                                        if (!status.isComplete() &&
+                                                (mb >= 49.0 || completedTiles >= 2950)) {
+                                            region.setDownloadState(OfflineRegion.STATE_INACTIVE);
+                                            notifyOfflineMapError(
+                                                    "La descarga alcanzó el límite seguro del proveedor. Reduce el área o vuelve a intentarlo."
+                                            );
+                                            return;
+                                        }
 
                                         if (status.isComplete()) {
                                             region.setDownloadState(OfflineRegion.STATE_INACTIVE);
