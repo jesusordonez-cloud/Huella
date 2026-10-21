@@ -1,5 +1,5 @@
 /* Huella — service worker: interfaz 2026 */
-const CACHE = 'huella-v2';
+const CACHE = 'huella-v3';
 const CORE = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
