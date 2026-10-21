@@ -25,8 +25,10 @@ if not match:
     raise SystemExit("No se encontró el logo Huella embebido en index.html")
 
 ext = match.group(1)
+encoded = match.group(2)
+encoded += "=" * (-len(encoded) % 4)
 for old in drawable.glob("huella_logo_exact.*"):
     old.unlink()
-(drawable / f"huella_logo_exact.{ext}").write_bytes(base64.b64decode(match.group(2)))
+(drawable / f"huella_logo_exact.{ext}").write_bytes(base64.b64decode(encoded))
 
 print("Assets Huella Premium 4 preparados para Android")
