@@ -34,6 +34,9 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 .trust{border-radius:24px;padding:7px 14px;background:rgba(3,12,9,.08)}.trustRow{display:grid;grid-template-columns:47px 1fr;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.13)}.trustRow:last-child{border-bottom:0}
 .bubble{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(225,255,246,.11);border:1px solid rgba(255,255,255,.20)}.bubble svg{width:25px;height:25px;stroke:#fff;fill:none;stroke-width:1.7}.trustRow b{display:block;font-size:15px;line-height:1.14}.trustRow span{font-size:12px;color:rgba(255,255,255,.72)}
 .start{display:block;width:min(68%,260px);margin:15px auto 0;border:1px solid rgba(112,255,214,.70);border-radius:999px;padding:12px 18px;background:linear-gradient(90deg,rgba(6,126,87,.72),rgba(27,211,151,.58));color:#fff;font-weight:850;font-size:17px;box-shadow:0 12px 34px rgba(0,155,108,.22),inset 0 1px 0 rgba(255,255,255,.18)}.start:active{transform:scale(.98)}
+.start{display:flex;align-items:center;justify-content:center;gap:9px}
+.start svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:1.9}
+.bioHint{text-align:center;margin:8px auto 0;max-width:310px;font-size:9.5px;line-height:1.35;color:rgba(255,255,255,.58)}
 
 /* camera */
 #cameraView{position:absolute;inset:0;background:#020604;overflow:hidden}
@@ -81,7 +84,8 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
     <div class="trustRow"><div class="bubble"><svg viewBox="0 0 24 24"><path d="M4 15c5-8 10-9 16-10-1 7-4 13-12 14"/><path d="M5 20c3-5 7-8 12-11"/></svg></div><div><b>Más que fotos</b><span>Historias que generan impacto</span></div></div>
     <div class="trustRow"><div class="bubble"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20v-2c0-3 2-5 6-5s6 2 6 5v2M14 13c5 0 8 2 8 6v1"/></svg></div><div><b>Para comunidades y proyectos reales</b></div></div>
    </div>
-   <button class="start" id="startBtn">Comenzar&nbsp;&nbsp;→</button>
+   <button class="start" id="startBtn"><svg id="bioIcon" viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-7 7M19 10a7 7 0 0 0-7-7"/><path d="M8 11a4 4 0 0 1 8 0c0 5-1 8-3 10M6 13c.2 4 1.2 6.4 3 8"/><path d="M10 12c0 4-.4 6.8-1 8M14 12c0 3-.4 5.4-1 7"/></svg><span id="startText">Iniciar con huella</span></button>
+   <div class="bioHint" id="bioHint">Huella usa la biometría registrada en tu teléfono; la aplicación no almacena tu huella digital.</div>
   </div>
  </div>
 </section>
@@ -125,7 +129,8 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
   <button class="menuItem hidden" id="flashItem"><svg viewBox="0 0 24 24"><path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z"/></svg><div><b>Flash continuo</b><small>Antorcha de la cámara</small></div><span class="value" id="flashValue">Apagado</span></button>
  </div>
  <div class="menuGroup">Mapa de evidencia</div>
- <div class="statusCard"><div><b>Mapa de calle integrado</b><small>Se guarda automáticamente en caché cuando hay conexión. El GPS y el localizador siguen funcionando sin internet.</small></div><span class="statusDot" id="mapStatus">Offline listo</span></div>
+ <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Ver mapa y descargar 1, 3 o 5 km alrededor del GPS</small></div><span class="value">Abrir</span></button>
+ <div class="statusCard" style="margin-top:8px"><div><b>Vista integrada en la evidencia</b><small>Al cerrar el mapa, Huella guarda una vista para anexarla al pie de tus fotografías.</small></div><span class="statusDot" id="mapStatus">Listo</span></div>
  <div class="menuGroup" id="zoomLabel">Zoom disponible</div>
  <div class="zoomRow" id="zoomRow"></div>
  <div class="menuGroup">Exportación</div>
@@ -137,7 +142,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 <script>
 (function(){
 const $=s=>document.querySelector(s),video=$('#video'),photoLayer=$('#photoLayer'),filePick=$('#filePick'),work=$('#work'),mapPreview=$('#mapPreview');
-let stream=null,facing='environment',geo=null,track=null,caps={},loadedImage=null,digitalZoom=1,torch=false,rearDevices=[],ultraDevice=null,mapTile=null,mapTileMeta=null;
+let stream=null,facing='environment',geo=null,track=null,caps={},loadedImage=null,digitalZoom=1,torch=false,rearDevices=[],ultraDevice=null,mapTile=null,mapTileMeta=null,nativeMapSnapshot=null,biometricAvailable=false;
 const state={title:'',cls:'Capacitación',address:'',quality:.98};
 const MAP_Z=15,MAP_CACHE='huella-map-v1';
 
@@ -145,6 +150,33 @@ function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');cl
 function openSheet(id){$('#'+id).classList.add('show')}function closeSheet(id){$('#'+id).classList.remove('show')}
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeSheet(b.dataset.close));
 document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{if(e.target===s)s.classList.remove('show')}));
+
+function enterApp(){
+ $('#intro').style.display='none';
+ startCam();
+ gps();
+ renderMapPreview();
+}
+function updateBiometricButton(){
+ const text=$('#startText'),icon=$('#bioIcon'),hint=$('#bioHint');
+ if(biometricAvailable){
+  text.textContent='Iniciar con huella';
+  icon.classList.remove('hidden');
+  hint.textContent='Huella usa la biometría registrada en tu teléfono; la aplicación no almacena tu huella digital.';
+ }else{
+  text.textContent='Comenzar';
+  icon.classList.add('hidden');
+  hint.textContent='La biometría no está disponible o no está configurada en este teléfono.';
+ }
+}
+window.HuellaBiometricSuccess=function(){enterApp()};
+window.HuellaBiometricUnavailable=function(){biometricAvailable=false;updateBiometricButton();toast('Biometría no disponible')};
+window.HuellaBiometricError=function(msg){toast(msg||'No se pudo validar la huella')};
+window.HuellaNativeMapSnapshot=function(dataUrl){
+ const im=new Image();
+ im.onload=function(){nativeMapSnapshot=im;$('#mapStatus').textContent='Vista guardada';renderMapPreview()};
+ im.src=dataUrl;
+};
 
 function sync(){
  state.title=$('#title').value.trim();state.cls=$('#classSel').value;state.address=$('#address').value.trim();state.quality=+$('#quality').value;
@@ -207,7 +239,11 @@ window.HuellaNativeLocation=function(lat,lon,acc){setGeo(lat,lon,acc,'GPS nativo
 window.HuellaNativeLocationError=function(msg){toast(msg||'No se pudo obtener GPS')};
 
 function setGeo(lat,lon,acc,src){
- geo={lat:+lat,lon:+lon,acc:+acc||0};$('#gpsText').textContent=geo.lat.toFixed(5)+', '+geo.lon.toFixed(5);sync();renderMapPreview();prefetchMap();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
+ geo={lat:+lat,lon:+lon,acc:+acc||0};$('#gpsText').textContent=geo.lat.toFixed(5)+', '+geo.lon.toFixed(5);try{
+ biometricAvailable=!!(window.HuellaAndroid&&typeof window.HuellaAndroid.biometricAvailable==='function'&&window.HuellaAndroid.biometricAvailable());
+}catch(e){biometricAvailable=false}
+updateBiometricButton();
+sync();renderMapPreview();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
 }
 function gps(){
  $('#gpsText').textContent='Buscando GPS…';
@@ -236,7 +272,7 @@ async function prefetchMap(){
  const jobs=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)jobs.push(tileResponse(t.x+dx,t.y+dy,t.z,true));
  Promise.allSettled(jobs).then(()=>{$('#mapStatus').textContent='Zona guardada';renderMapPreview()});
 }
-async function getCenterTile(){if(!geo)return null;const t=tileInfo(geo.lat,geo.lon);const res=await tileResponse(t.x,t.y,t.z,true);const img=await responseImage(res);return img?{img,t}:null}
+async function getCenterTile(){return nativeMapSnapshot?{snapshot:nativeMapSnapshot}:null}
 
 function drawOfflineLocator(ctx,w,h){
  ctx.fillStyle='#0A1A14';ctx.fillRect(0,0,w,h);ctx.strokeStyle='rgba(92,255,208,.18)';ctx.lineWidth=1;
@@ -247,13 +283,27 @@ function drawOfflineLocator(ctx,w,h){
 }
 async function renderMapPreview(){
  const ctx=mapPreview.getContext('2d'),w=mapPreview.width,h=mapPreview.height;ctx.clearRect(0,0,w,h);
- if(!geo){drawOfflineLocator(ctx,w,h);return}
- const got=await getCenterTile();
- if(got){mapTile=got.img;mapTileMeta=got.t;ctx.drawImage(got.img,0,0,w,h);const px=got.t.fx*w,py=got.t.fy*h;ctx.fillStyle='#FF4E52';ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke()}
- else{mapTile=null;mapTileMeta=tileInfo(geo.lat,geo.lon);drawOfflineLocator(ctx,w,h)}
+ if(nativeMapSnapshot){
+  ctx.drawImage(nativeMapSnapshot,0,0,w,h);
+  ctx.fillStyle='rgba(0,0,0,.48)';ctx.fillRect(0,h-17,w,17);
+  ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='9px system-ui';ctx.fillText('OpenFreeMap · © OSM',5,h-5);
+  return;
+ }
+ drawOfflineLocator(ctx,w,h);
 }
 
-$('#startBtn').onclick=()=>{$('#intro').style.display='none';startCam();gps();renderMapPreview()};
+$('#startBtn').onclick=()=>{
+ if(biometricAvailable&&window.HuellaAndroid&&typeof window.HuellaAndroid.requestBiometric==='function'){
+  window.HuellaAndroid.requestBiometric();
+ }else enterApp();
+};
+$('#offlineMapItem').onclick=()=>{
+ if(!geo){gps();toast('Obteniendo GPS antes de abrir el mapa…');return}
+ if(window.HuellaAndroid&&typeof window.HuellaAndroid.openOfflineMap==='function'){
+  closeSheet('menuSheet');
+  window.HuellaAndroid.openOfflineMap(geo.lat,geo.lon);
+ }else toast('El visor offline está disponible en la APK');
+};
 
 async function captureSource(){
  if(loadedImage)return loadedImage;
@@ -277,8 +327,11 @@ function drawFooter(x,W,H,fh,map){
  const coord=geo?geo.lat.toFixed(6)+', '+geo.lon.toFixed(6)+'  ±'+Math.round(geo.acc||0)+' m':'Sin coordenadas';x.fillText(fit(x,coord,mapX-left-p*2),left+p,y+fh*.74);
  x.fillStyle='rgba(255,255,255,.16)';roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.fill();
  x.save();roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.clip();
- if(map&&map.img){x.drawImage(map.img,mapX,mapY,mapW,mapH);const px=mapX+map.t.fx*mapW,py=mapY+map.t.fy*mapH;x.fillStyle='#FF4E52';x.beginPath();x.arc(px,py,Math.max(7,mapW*.035),0,Math.PI*2);x.fill();x.strokeStyle='#fff';x.lineWidth=Math.max(2,mapW*.008);x.stroke()}
- else{x.save();x.translate(mapX,mapY);drawOfflineLocator(x,mapW,mapH);x.restore()}
+ if(map&&map.snapshot){
+  x.drawImage(map.snapshot,mapX,mapY,mapW,mapH);
+  x.fillStyle='rgba(0,0,0,.52)';x.fillRect(mapX,mapY+mapH-Math.max(18,mapH*.13),mapW,Math.max(18,mapH*.13));
+  x.fillStyle='rgba(255,255,255,.92)';x.font=Math.max(10,mapW*.035)+'px system-ui';x.fillText('OpenFreeMap · © OpenStreetMap',mapX+7,mapY+mapH-6);
+ }else{x.save();x.translate(mapX,mapY);drawOfflineLocator(x,mapW,mapH);x.restore()}
  x.restore();x.strokeStyle='rgba(255,255,255,.42)';x.lineWidth=1;roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.stroke();x.restore();
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
