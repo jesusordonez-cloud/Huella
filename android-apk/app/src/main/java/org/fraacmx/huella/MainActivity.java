@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -19,6 +20,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.DocumentsContract;
 import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,11 +69,15 @@ import java.util.concurrent.Executor;
 public class MainActivity extends FragmentActivity {
     private static final int REQ_PERMISSIONS = 2001;
     private static final int REQ_FILE_CHOOSER = 2002;
+    private static final int REQ_SAVE_FOLDER = 2003;
+    private static final String PREFS_NAME = "huella_prefs";
+    private static final String PREF_SAVE_TREE = "save_tree_uri";
     private static final String APP_URL = "https://appassets.androidplatform.net/huella417/index.html";
     private static final String MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    private String fileChooserPurpose = "generic";
     private LocationManager locationManager;
     private LocationListener activeLocationListener;
     private MapSnapshotter activeSnapshotter;
@@ -685,6 +691,114 @@ public class MainActivity extends FragmentActivity {
         });
     }
 
+    private SharedPreferences prefs() {
+        return getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+    }
+
+    private void chooseSaveFolder() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            intent.addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION |
+                    Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+            );
+            String saved = prefs().getString(PREF_SAVE_TREE, null);
+            if (Build.VERSION.SDK_INT >= 26 && saved != null && !saved.isEmpty()) {
+                try {
+                    intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(saved));
+                } catch (Exception ignored) {
+                }
+            }
+            startActivityForResult(intent, REQ_SAVE_FOLDER);
+        } catch (Exception error) {
+            Toast.makeText(
+                    this,
+                    "No se pudo abrir el selector de carpetas",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+    private String selectedFolderLabel() {
+        String saved = prefs().getString(PREF_SAVE_TREE, null);
+        if (saved == null || saved.isEmpty()) return "Descargas/Huella";
+        try {
+            Uri uri = Uri.parse(saved);
+            String id = DocumentsContract.getTreeDocumentId(uri);
+            if (id == null || id.isEmpty()) return "Carpeta personalizada";
+            int colon = id.indexOf(':');
+            if (colon >= 0) {
+                String volume = id.substring(0, colon);
+                String path = id.substring(colon + 1);
+                if ("primary".equalsIgnoreCase(volume)) {
+                    return path.isEmpty() ? "Almacenamiento interno" : path;
+                }
+                return path.isEmpty() ? volume : volume + "/" + path;
+            }
+            return id;
+        } catch (Exception ignored) {
+            return "Carpeta personalizada";
+        }
+    }
+
+    private void notifySaveFolderToWeb() {
+        if (webView == null) return;
+        String label = selectedFolderLabel()
+                .replace("\\", "\\\\")
+                .replace("'", "\\'");
+        webView.evaluateJavascript(
+                "window.HuellaSaveFolderChanged&&window.HuellaSaveFolderChanged('" +
+                        label + "');",
+                null
+        );
+    }
+
+    private String saveToPreferredLocation(
+            String fileName,
+            byte[] data,
+            String mimeType
+    ) throws Exception {
+        String saved = prefs().getString(PREF_SAVE_TREE, null);
+        if (saved != null && !saved.isEmpty()) {
+            try {
+                Uri treeUri = Uri.parse(saved);
+                String documentId = DocumentsContract.getTreeDocumentId(treeUri);
+                Uri parent = DocumentsContract.buildDocumentUriUsingTree(
+                        treeUri,
+                        documentId
+                );
+                Uri fileUri = DocumentsContract.createDocument(
+                        getContentResolver(),
+                        parent,
+                        mimeType,
+                        fileName
+                );
+                if (fileUri == null) {
+                    throw new IllegalStateException("No se pudo crear el archivo");
+                }
+                try (OutputStream out = getContentResolver().openOutputStream(
+                        fileUri,
+                        "w"
+                )) {
+                    if (out == null) {
+                        throw new IllegalStateException("No se pudo abrir el archivo");
+                    }
+                    out.write(data);
+                    out.flush();
+                }
+                return selectedFolderLabel();
+            } catch (Exception customError) {
+                // Si Android revocó el permiso, se regresa al destino seguro.
+                prefs().edit().remove(PREF_SAVE_TREE).apply();
+            }
+        }
+
+        saveToDownloads(fileName, data, mimeType);
+        return "Descargas/Huella";
+    }
+
     private void pushMapSnapshotToWeb() {
         if (webView == null) return;
         File file = new File(getFilesDir(), "offline_map_preview.png");
@@ -710,10 +824,52 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQ_FILE_CHOOSER && filePathCallback != null) {
-            Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-            filePathCallback.onReceiveValue(result);
-            filePathCallback = null;
+
+        if (requestCode == REQ_FILE_CHOOSER) {
+            if (filePathCallback != null) {
+                Uri[] result = WebChromeClient.FileChooserParams.parseResult(
+                        resultCode,
+                        data
+                );
+                filePathCallback.onReceiveValue(result);
+                filePathCallback = null;
+            }
+
+            if ("logo".equals(fileChooserPurpose) && webView != null) {
+                webView.postDelayed(() -> webView.evaluateJavascript(
+                        "window.HuellaResumeCamera&&window.HuellaResumeCamera();",
+                        null
+                ), 650);
+            }
+            fileChooserPurpose = "generic";
+            return;
+        }
+
+        if (requestCode == REQ_SAVE_FOLDER) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri treeUri = data.getData();
+                int flags = data.getFlags() &
+                        (Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                try {
+                    getContentResolver().takePersistableUriPermission(
+                            treeUri,
+                            flags
+                    );
+                } catch (Exception ignored) {
+                }
+                prefs().edit()
+                        .putString(PREF_SAVE_TREE, treeUri.toString())
+                        .apply();
+                Toast.makeText(
+                        this,
+                        "Carpeta de guardado actualizada",
+                        Toast.LENGTH_SHORT
+                ).show();
+                if (webView != null) {
+                    webView.post(this::notifySaveFolderToWeb);
+                }
+            }
         }
     }
 
@@ -723,6 +879,10 @@ public class MainActivity extends FragmentActivity {
         if (webView != null) {
             webView.onResume();
             webView.postDelayed(this::pushMapSnapshotToWeb, 350);
+            webView.postDelayed(() -> webView.evaluateJavascript(
+                    "window.HuellaNativeResume&&window.HuellaNativeResume();",
+                    null
+            ), 500);
         }
     }
 
@@ -779,6 +939,21 @@ public class MainActivity extends FragmentActivity {
         }
 
         @JavascriptInterface
+        public void setFileChooserPurpose(String purpose) {
+            fileChooserPurpose = purpose == null ? "generic" : purpose;
+        }
+
+        @JavascriptInterface
+        public void chooseSaveFolder() {
+            runOnUiThread(() -> MainActivity.this.chooseSaveFolder());
+        }
+
+        @JavascriptInterface
+        public String getSaveFolderLabel() {
+            return selectedFolderLabel();
+        }
+
+        @JavascriptInterface
         public void requestLocation() {
             runOnUiThread(() -> requestBestLocation());
         }
@@ -788,14 +963,14 @@ public class MainActivity extends FragmentActivity {
             try {
                 byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
                 String safeName = sanitizeFileName(fileName);
-                saveToDownloads(
+                String destination = saveToPreferredLocation(
                         safeName,
                         bytes,
                         mimeType == null ? "application/octet-stream" : mimeType
                 );
                 runOnUiThread(() -> Toast.makeText(
                         MainActivity.this,
-                        "Guardado en Descargas/Huella",
+                        "Guardado en " + destination,
                         Toast.LENGTH_SHORT
                 ).show());
             } catch (Exception e) {
