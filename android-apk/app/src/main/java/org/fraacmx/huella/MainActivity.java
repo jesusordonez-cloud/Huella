@@ -466,7 +466,7 @@ public class MainActivity extends FragmentActivity {
     private void downloadOfflineMap(double lat, double lon, double radiusKm) {
         runOnUiThread(() -> {
             try {
-                double safeRadius = Math.max(1.0, Math.min(5.0, radiusKm));
+                double safeRadius = Math.max(1.0, Math.min(50.0, radiusKm));
                 double latDelta = safeRadius / 111.32;
                 double lonDelta = safeRadius /
                         (111.32 * Math.max(0.2, Math.cos(Math.toRadians(lat))));
@@ -476,12 +476,28 @@ public class MainActivity extends FragmentActivity {
                         .include(new LatLng(lat - latDelta, lon - lonDelta))
                         .build();
 
+                double minZoom;
+                double maxZoom;
+                if (safeRadius <= 5.0) {
+                    minZoom = 13.0;
+                    maxZoom = 16.0;
+                } else if (safeRadius <= 10.0) {
+                    minZoom = 12.0;
+                    maxZoom = 15.0;
+                } else if (safeRadius <= 25.0) {
+                    minZoom = 11.0;
+                    maxZoom = 14.0;
+                } else {
+                    minZoom = 10.0;
+                    maxZoom = 13.0;
+                }
+
                 OfflineTilePyramidRegionDefinition definition =
                         new OfflineTilePyramidRegionDefinition(
                                 MAP_STYLE_URL,
                                 bounds,
-                                13.0,
-                                16.0,
+                                minZoom,
+                                maxZoom,
                                 1.0f,
                                 false
                         );
