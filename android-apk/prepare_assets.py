@@ -18,12 +18,15 @@ for name in ("index.html", "manifest.json", "sw.js"):
 
 shutil.copytree(repo / "icons", assets / "icons")
 
-# Extrae el primer logo PNG embebido en index.html y lo usa como icono real de Android.
+# Extrae el primer logo Huella embebido (PNG o WebP) y lo usa como icono real de Android.
 html = (repo / "index.html").read_text(encoding="utf-8")
-match = re.search(r"data:image/png;base64,([A-Za-z0-9+/=]+)", html)
+match = re.search(r"data:image/(png|webp);base64,([A-Za-z0-9+/=]+)", html)
 if not match:
     raise SystemExit("No se encontró el logo Huella embebido en index.html")
 
-(drawable / "huella_logo_exact.png").write_bytes(base64.b64decode(match.group(1)))
+ext = match.group(1)
+for old in drawable.glob("huella_logo_exact.*"):
+    old.unlink()
+(drawable / f"huella_logo_exact.{ext}").write_bytes(base64.b64decode(match.group(2)))
 
 print("Assets Huella Premium 4 preparados para Android")
