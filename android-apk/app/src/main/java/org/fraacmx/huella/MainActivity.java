@@ -5,7 +5,10 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Insets;
 import android.location.Location;
 import android.location.LocationListener;
@@ -39,23 +42,39 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.webkit.WebViewAssetLoader;
 
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.geometry.LatLngBounds;
+import org.maplibre.android.maps.Style;
+import org.maplibre.android.offline.OfflineManager;
+import org.maplibre.android.offline.OfflineRegion;
+import org.maplibre.android.offline.OfflineRegionError;
+import org.maplibre.android.offline.OfflineRegionStatus;
+import org.maplibre.android.offline.OfflineTilePyramidRegionDefinition;
+import org.maplibre.android.snapshotter.MapSnapshotter;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 
 public class MainActivity extends FragmentActivity {
     private static final int REQ_PERMISSIONS = 2001;
     private static final int REQ_FILE_CHOOSER = 2002;
-    private static final String APP_URL = "https://appassets.androidplatform.net/assets/index.html";
+    private static final String APP_URL = "https://appassets.androidplatform.net/huella417/index.html";
+    private static final String MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
     private LocationManager locationManager;
     private LocationListener activeLocationListener;
+    private MapSnapshotter activeSnapshotter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,9 +112,16 @@ public class MainActivity extends FragmentActivity {
         settings.setLoadsImagesAutomatically(true);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(false);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
+
+        try {
+            MapLibre.getInstance(this);
+        } catch (Throwable ignored) {
+        }
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/huella417/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         webView.addJavascriptInterface(new NativeBridge(), "HuellaAndroid");
@@ -415,25 +441,216 @@ public class MainActivity extends FragmentActivity {
         prompt.authenticate(info);
     }
 
-    private void openOfflineMap(double lat, double lon) {
-        try {
-            Intent intent = new Intent(this, MapActivity.class);
-            intent.putExtra("lat", lat);
-            intent.putExtra("lon", lon);
-            startActivity(intent);
-        } catch (Throwable error) {
-            Toast.makeText(
-                    this,
-                    "No se pudo abrir el mapa offline",
-                    Toast.LENGTH_LONG
-            ).show();
-            if (webView != null) {
-                webView.evaluateJavascript(
-                        "window.HuellaOfflineMapError&&window.HuellaOfflineMapError();",
-                        null
+    private void notifyOfflineMapProgress(int percent, double mb, String status) {
+        if (webView == null) return;
+        String safe = status == null ? "" : status
+                .replace("\\", "\\\\")
+                .replace("'", "\\'");
+        String js = "window.HuellaOfflineDownloadProgress&&window.HuellaOfflineDownloadProgress(" +
+                percent + "," +
+                String.format(Locale.US, "%.2f", mb) + ",'" +
+                safe + "');";
+        runOnUiThread(() -> webView.evaluateJavascript(js, null));
+    }
+
+    private void notifyOfflineMapError(String message) {
+        if (webView == null) return;
+        String safe = message == null ? "No se pudo preparar el mapa offline" : message
+                .replace("\\", "\\\\")
+                .replace("'", "\\'");
+        String js = "window.HuellaOfflineMapError&&window.HuellaOfflineMapError('" +
+                safe + "');";
+        runOnUiThread(() -> webView.evaluateJavascript(js, null));
+    }
+
+    private void downloadOfflineMap(double lat, double lon, double radiusKm) {
+        runOnUiThread(() -> {
+            try {
+                double safeRadius = Math.max(1.0, Math.min(5.0, radiusKm));
+                double latDelta = safeRadius / 111.32;
+                double lonDelta = safeRadius /
+                        (111.32 * Math.max(0.2, Math.cos(Math.toRadians(lat))));
+
+                LatLngBounds bounds = new LatLngBounds.Builder()
+                        .include(new LatLng(lat + latDelta, lon + lonDelta))
+                        .include(new LatLng(lat - latDelta, lon - lonDelta))
+                        .build();
+
+                OfflineTilePyramidRegionDefinition definition =
+                        new OfflineTilePyramidRegionDefinition(
+                                MAP_STYLE_URL,
+                                bounds,
+                                13.0,
+                                16.0,
+                                1.0f,
+                                false
+                        );
+
+                String metadataText = "{\"name\":\"Huella " + safeRadius +
+                        " km\",\"lat\":" + lat + ",\"lon\":" + lon + "}";
+                byte[] metadata = metadataText.getBytes(StandardCharsets.UTF_8);
+
+                notifyOfflineMapProgress(0, 0.0, "Preparando descarga…");
+
+                OfflineManager manager = OfflineManager.getInstance(this);
+                manager.createOfflineRegion(
+                        definition,
+                        metadata,
+                        new OfflineManager.CreateOfflineRegionCallback() {
+                            @Override
+                            public void onCreate(OfflineRegion region) {
+                                region.setObserver(new OfflineRegion.OfflineRegionObserver() {
+                                    @Override
+                                    public void onStatusChanged(OfflineRegionStatus status) {
+                                        long completed = status.getCompletedResourceCount();
+                                        long required = status.getRequiredResourceCount();
+                                        int percent = required > 0
+                                                ? (int) Math.min(100, (completed * 100L) / required)
+                                                : 0;
+                                        double mb = status.getCompletedResourceSize() /
+                                                (1024.0 * 1024.0);
+
+                                        if (status.isComplete()) {
+                                            region.setDownloadState(OfflineRegion.STATE_INACTIVE);
+                                            notifyOfflineMapProgress(
+                                                    100,
+                                                    mb,
+                                                    "Zona offline lista"
+                                            );
+                                            requestMapSnapshot(lat, lon);
+                                        } else {
+                                            notifyOfflineMapProgress(
+                                                    percent,
+                                                    mb,
+                                                    "Descargando mapa…"
+                                            );
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError(OfflineRegionError error) {
+                                        notifyOfflineMapError(
+                                                error == null
+                                                        ? "Error descargando el mapa"
+                                                        : error.getMessage()
+                                        );
+                                    }
+
+                                    @Override
+                                    public void mapboxTileCountLimitExceeded(long limit) {
+                                        region.setDownloadState(OfflineRegion.STATE_INACTIVE);
+                                        notifyOfflineMapError(
+                                                "La zona seleccionada supera el límite de descarga"
+                                        );
+                                    }
+                                });
+                                region.setDownloadState(OfflineRegion.STATE_ACTIVE);
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                notifyOfflineMapError(error);
+                            }
+                        }
                 );
+            } catch (Throwable error) {
+                notifyOfflineMapError("No se pudo iniciar la descarga offline");
             }
-        }
+        });
+    }
+
+    private void requestMapSnapshot(double lat, double lon) {
+        runOnUiThread(() -> {
+            try {
+                if (activeSnapshotter != null) {
+                    try { activeSnapshotter.cancel(); } catch (Throwable ignored) {}
+                    activeSnapshotter = null;
+                }
+
+                MapSnapshotter.Options options = new MapSnapshotter.Options(900, 560)
+                        .withPixelRatio(1.0f)
+                        .withStyleBuilder(new Style.Builder().fromUri(MAP_STYLE_URL))
+                        .withCameraPosition(
+                                new CameraPosition.Builder()
+                                        .target(new LatLng(lat, lon))
+                                        .zoom(15.5)
+                                        .build()
+                        );
+
+                activeSnapshotter = new MapSnapshotter(
+                        getApplicationContext(),
+                        options
+                );
+
+                notifyOfflineMapProgress(0, 0.0, "Preparando vista…");
+
+                activeSnapshotter.start(
+                        snapshot -> {
+                            try {
+                                Bitmap source = snapshot.getBitmap();
+                                Bitmap bitmap = source.copy(
+                                        Bitmap.Config.ARGB_8888,
+                                        true
+                                );
+
+                                Canvas canvas = new Canvas(bitmap);
+                                Paint outer = new Paint(Paint.ANTI_ALIAS_FLAG);
+                                outer.setColor(Color.WHITE);
+                                canvas.drawCircle(
+                                        bitmap.getWidth() / 2f,
+                                        bitmap.getHeight() / 2f,
+                                        15f,
+                                        outer
+                                );
+                                Paint inner = new Paint(Paint.ANTI_ALIAS_FLAG);
+                                inner.setColor(Color.rgb(255, 70, 76));
+                                canvas.drawCircle(
+                                        bitmap.getWidth() / 2f,
+                                        bitmap.getHeight() / 2f,
+                                        10f,
+                                        inner
+                                );
+
+                                File file = new File(
+                                        getFilesDir(),
+                                        "offline_map_preview.png"
+                                );
+                                try (FileOutputStream out = new FileOutputStream(file)) {
+                                    bitmap.compress(
+                                            Bitmap.CompressFormat.PNG,
+                                            95,
+                                            out
+                                    );
+                                }
+
+                                pushMapSnapshotToWeb();
+                                notifyOfflineMapProgress(
+                                        100,
+                                        0.0,
+                                        "Vista del mapa lista"
+                                );
+                            } catch (Throwable error) {
+                                notifyOfflineMapError(
+                                        "No se pudo generar la vista del mapa"
+                                );
+                            } finally {
+                                activeSnapshotter = null;
+                            }
+                        },
+                        error -> {
+                            activeSnapshotter = null;
+                            notifyOfflineMapError(
+                                    error == null
+                                            ? "No se pudo cargar la vista del mapa"
+                                            : error
+                            );
+                        }
+                );
+            } catch (Throwable error) {
+                activeSnapshotter = null;
+                notifyOfflineMapError("No se pudo preparar la vista del mapa");
+            }
+        });
     }
 
     private void pushMapSnapshotToWeb() {
@@ -489,6 +706,10 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onDestroy() {
+        if (activeSnapshotter != null) {
+            try { activeSnapshotter.cancel(); } catch (Throwable ignored) {}
+            activeSnapshotter = null;
+        }
         if (locationManager != null && activeLocationListener != null) {
             try { locationManager.removeUpdates(activeLocationListener); } catch (Exception ignored) {}
         }
@@ -512,7 +733,17 @@ public class MainActivity extends FragmentActivity {
 
         @JavascriptInterface
         public void openOfflineMap(double lat, double lon) {
-            runOnUiThread(() -> MainActivity.this.openOfflineMap(lat, lon));
+            runOnUiThread(() -> MainActivity.this.requestMapSnapshot(lat, lon));
+        }
+
+        @JavascriptInterface
+        public void downloadOfflineMap(double lat, double lon, double radiusKm) {
+            MainActivity.this.downloadOfflineMap(lat, lon, radiusKm);
+        }
+
+        @JavascriptInterface
+        public void requestMapSnapshot(double lat, double lon) {
+            MainActivity.this.requestMapSnapshot(lat, lon);
         }
 
         @JavascriptInterface
