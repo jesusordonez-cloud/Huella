@@ -72,7 +72,7 @@ public class MainActivity extends FragmentActivity {
     private static final int REQ_SAVE_FOLDER = 2003;
     private static final String PREFS_NAME = "huella_prefs";
     private static final String PREF_SAVE_TREE = "save_tree_uri";
-    private static final String APP_URL = "https://appassets.androidplatform.net/huella422/index.html";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/index.html?v=423";
     private static final String MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
     private WebView webView;
@@ -127,7 +127,7 @@ public class MainActivity extends FragmentActivity {
         }
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/huella417/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         webView.addJavascriptInterface(new NativeBridge(), "HuellaAndroid");
