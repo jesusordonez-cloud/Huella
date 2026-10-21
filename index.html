@@ -150,6 +150,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  <div class="menuGroup" id="zoomLabel">Zoom disponible</div>
  <div class="zoomRow" id="zoomRow"></div>
  <div class="menuGroup">Exportación</div>
+ <button class="menuItem" id="saveFolderItem"><svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3V6Z"/><path d="M7 13h10M12 10v6"/></svg><div><b>Carpeta de guardado</b><small>Elegir dónde guardar las fotografías de Huella</small></div><span class="value" id="saveFolderValue">Descargas/Huella</span></button>
  <div class="field"><label>Calidad JPEG</label><select id="quality"><option value=".98">Máxima · 98%</option><option value=".95">Alta · 95%</option><option value=".90">Equilibrada · 90%</option></select></div>
  <div class="sheetBtns"><button class="sheetBtn primary" data-close="menuSheet">Listo</button></div>
 </div></div>
@@ -204,6 +205,23 @@ function updateBiometricButton(){
 window.HuellaBiometricSuccess=function(){enterApp()};
 window.HuellaBiometricUnavailable=function(){biometricAvailable=false;updateBiometricButton();toast('Biometría no disponible')};
 window.HuellaBiometricError=function(msg){toast(msg||'No se pudo validar la huella')};
+async function ensureCameraActive(){
+ if(loadedImage)return;
+ if($('#intro').style.display!=='none')return;
+ try{
+  const vt=stream&&stream.getVideoTracks?stream.getVideoTracks()[0]:null;
+  if(!vt||vt.readyState!=='live'||vt.muted||video.readyState<2){
+   await startCam();
+   return;
+  }
+  video.style.display='block';
+  await video.play();
+ }catch(e){
+  try{await startCam()}catch(_){}
+ }
+}
+window.HuellaResumeCamera=function(){setTimeout(ensureCameraActive,180)};
+window.HuellaNativeResume=function(){setTimeout(ensureCameraActive,220)};
 window.HuellaNativeMapSnapshot=function(dataUrl){
  const im=new Image();
  im.onload=function(){
@@ -373,13 +391,27 @@ function sync(){
 $('#classSel').addEventListener('change',handleClassSelect);
 $('#addClassBtn').onclick=addCustomClassification;
 $('#newClass').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCustomClassification()}});
-$('#chooseOrgLogo').onclick=()=>orgLogoPick.click();
+$('#chooseOrgLogo').onclick=()=>{if(window.HuellaAndroid&&typeof window.HuellaAndroid.setFileChooserPurpose==='function')window.HuellaAndroid.setFileChooserPurpose('logo');orgLogoPick.click()};
 $('#removeOrgLogo').onclick=()=>{state.orgLogoData='';orgBrandImg=null;$('#orgLogoPreview').src='icons/huella_logo.svg';$('#orgLogoPreview').classList.add('empty');persistBrandConfig();updateBrandPreview();toast('Logo de organización eliminado')};
-orgLogoPick.onchange=e=>{const file=e.target.files&&e.target.files[0];processOrgLogo(file);e.target.value=''};
+orgLogoPick.onchange=e=>{const file=e.target.files&&e.target.files[0];processOrgLogo(file);e.target.value='';setTimeout(ensureCameraActive,500)};
 $('#orgName').addEventListener('input',()=>{state.orgName=$('#orgName').value.trim();persistBrandConfig();updateBrandPreview()});
 $('#brandPriority').addEventListener('change',()=>{state.brandPriority=$('#brandPriority').value==='huella'?'huella':'organization';persistBrandConfig();updateBrandPreview()});
-$('#dataBtn').onclick=()=>openSheet('dataSheet');$('#menuBtn').onclick=()=>openSheet('menuSheet');
-$('#saveData').onclick=()=>{sync();closeSheet('dataSheet');toast('Datos actualizados')};
+window.HuellaSaveFolderChanged=function(label){$('#saveFolderValue').textContent=label||'Carpeta personalizada'};
+function updateSaveFolderLabel(){
+ try{
+  if(window.HuellaAndroid&&typeof window.HuellaAndroid.getSaveFolderLabel==='function'){
+   const label=window.HuellaAndroid.getSaveFolderLabel();
+   if(label)$('#saveFolderValue').textContent=label;
+  }
+ }catch(e){}
+}
+$('#saveFolderItem').onclick=()=>{
+ if(window.HuellaAndroid&&typeof window.HuellaAndroid.chooseSaveFolder==='function'){
+  window.HuellaAndroid.chooseSaveFolder();
+ }else toast('Disponible en la APK Android');
+};
+$('#dataBtn').onclick=()=>openSheet('dataSheet');$('#menuBtn').onclick=()=>{updateSaveFolderLabel();openSheet('menuSheet')};
+$('#saveData').onclick=()=>{sync();closeSheet('dataSheet');toast('Datos actualizados');setTimeout(ensureCameraActive,180)};
 
 async function enumerateCameras(){
  try{
@@ -424,7 +456,7 @@ async function setZoom(v){
 }
 $('#flashItem').onclick=async()=>{try{if(!caps.torch)return;torch=!torch;await track.applyConstraints({advanced:[{torch}]});$('#flashValue').textContent=torch?'Encendido':'Apagado'}catch(e){toast('Flash no disponible')}};
 $('#flipBtn').onclick=()=>{facing=facing==='environment'?'user':'environment';startCam()};
-$('#galleryBtn').onclick=()=>filePick.click();
+$('#galleryBtn').onclick=()=>{if(window.HuellaAndroid&&typeof window.HuellaAndroid.setFileChooserPurpose==='function')window.HuellaAndroid.setFileChooserPurpose('photo');filePick.click()};
 filePick.onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{loadedImage=im;const r=im.width/im.height;photoLayer.width=1600;photoLayer.height=Math.round(1600/r);photoLayer.getContext('2d').drawImage(im,0,0,photoLayer.width,photoLayer.height);photoLayer.style.display='block';video.style.display='none';digitalZoom=1;toast('Foto cargada')};im.src=URL.createObjectURL(f)};
 
 window.HuellaNativeLocation=function(lat,lon,acc){setGeo(lat,lon,acc,'GPS nativo')};
@@ -435,7 +467,7 @@ function setGeo(lat,lon,acc,src){
  biometricAvailable=!!(window.HuellaAndroid&&typeof window.HuellaAndroid.biometricAvailable==='function'&&window.HuellaAndroid.biometricAvailable());
 }catch(e){biometricAvailable=false}
 updateBiometricButton();
-loadBrandConfig();sync();renderMapPreview();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
+loadBrandConfig();updateSaveFolderLabel();sync();renderMapPreview();reverseGeo();toast(src==='GPS nativo'?'GPS obtenido sin depender de Maps':'GPS obtenido');
 }
 function gps(){
  $('#gpsText').textContent='Buscando GPS…';
