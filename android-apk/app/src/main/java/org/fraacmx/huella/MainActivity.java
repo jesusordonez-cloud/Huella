@@ -325,7 +325,7 @@ public class MainActivity extends Activity {
 
     private void notifyLocationError(String message) {
         if (webView == null) return;
-        String escaped = message.replace("\", "\\").replace("'", "\'");
+        String escaped = message.replace("\\", "\\\\").replace("'", "\\'");
         String js = "window.HuellaNativeLocationError&&window.HuellaNativeLocationError('" +
                 escaped + "');";
         runOnUiThread(() -> webView.evaluateJavascript(js, null));
@@ -402,7 +402,7 @@ public class MainActivity extends Activity {
 
     private String sanitizeFileName(String name) {
         if (name == null || name.trim().isEmpty()) return "Huella";
-        return name.replaceAll("[\\/:*?"<>|]", "_");
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
     private void saveToDownloads(String fileName, byte[] data, String mimeType) throws Exception {
