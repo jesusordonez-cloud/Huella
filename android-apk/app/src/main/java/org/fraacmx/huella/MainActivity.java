@@ -1,7 +1,6 @@
 package org.fraacmx.huella;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -34,15 +33,21 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
     private static final int REQ_PERMISSIONS = 2001;
     private static final int REQ_FILE_CHOOSER = 2002;
     private static final String APP_URL = "https://appassets.androidplatform.net/assets/index.html";
@@ -331,6 +336,114 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> webView.evaluateJavascript(js, null));
     }
 
+    private boolean isBiometricAvailable() {
+        try {
+            BiometricManager manager = BiometricManager.from(this);
+            return manager.canAuthenticate(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG
+            ) == BiometricManager.BIOMETRIC_SUCCESS;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void requestBiometricAuth() {
+        if (!isBiometricAvailable()) {
+            if (webView != null) {
+                webView.evaluateJavascript(
+                        "window.HuellaBiometricUnavailable&&window.HuellaBiometricUnavailable();",
+                        null
+                );
+            }
+            return;
+        }
+
+        Executor executor = ContextCompat.getMainExecutor(this);
+        BiometricPrompt prompt = new BiometricPrompt(
+                this,
+                executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result
+                    ) {
+                        super.onAuthenticationSucceeded(result);
+                        if (webView != null) {
+                            webView.evaluateJavascript(
+                                    "window.HuellaBiometricSuccess&&window.HuellaBiometricSuccess();",
+                                    null
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        super.onAuthenticationError(errorCode, errString);
+                        if (webView != null) {
+                            String msg = errString == null ? "Autenticación cancelada" :
+                                    errString.toString()
+                                            .replace("\\", "\\\\")
+                                            .replace("'", "\\'");
+                            webView.evaluateJavascript(
+                                    "window.HuellaBiometricError&&window.HuellaBiometricError('" +
+                                            msg + "');",
+                                    null
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onAuthenticationFailed() {
+                        super.onAuthenticationFailed();
+                        if (webView != null) {
+                            webView.evaluateJavascript(
+                                    "window.HuellaBiometricError&&window.HuellaBiometricError('Huella no reconocida');",
+                                    null
+                            );
+                        }
+                    }
+                }
+        );
+
+        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Huella")
+                .setSubtitle("Confirma tu identidad para ingresar")
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setNegativeButtonText("Cancelar")
+                .build();
+
+        prompt.authenticate(info);
+    }
+
+    private void openOfflineMap(double lat, double lon) {
+        Intent intent = new Intent(this, MapActivity.class);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lon", lon);
+        startActivity(intent);
+    }
+
+    private void pushMapSnapshotToWeb() {
+        if (webView == null) return;
+        File file = new File(getFilesDir(), "offline_map_preview.png");
+        if (!file.exists() || file.length() <= 0 || file.length() > 8_000_000) return;
+
+        try (FileInputStream in = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int) file.length()];
+            int offset = 0;
+            int read;
+            while (offset < bytes.length &&
+                    (read = in.read(bytes, offset, bytes.length - offset)) > 0) {
+                offset += read;
+            }
+            if (offset <= 0) return;
+            String b64 = Base64.encodeToString(bytes, 0, offset, Base64.NO_WRAP);
+            String js = "window.HuellaNativeMapSnapshot&&window.HuellaNativeMapSnapshot(" +
+                    "'data:image/png;base64," + b64 + "');";
+            webView.evaluateJavascript(js, null);
+        } catch (Exception ignored) {
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -344,7 +457,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (webView != null) webView.onResume();
+        if (webView != null) {
+            webView.onResume();
+            webView.postDelayed(this::pushMapSnapshotToWeb, 350);
+        }
     }
 
     @Override
@@ -370,6 +486,21 @@ public class MainActivity extends Activity {
     }
 
     private class NativeBridge {
+        @JavascriptInterface
+        public boolean biometricAvailable() {
+            return isBiometricAvailable();
+        }
+
+        @JavascriptInterface
+        public void requestBiometric() {
+            runOnUiThread(() -> requestBiometricAuth());
+        }
+
+        @JavascriptInterface
+        public void openOfflineMap(double lat, double lon) {
+            runOnUiThread(() -> MainActivity.this.openOfflineMap(lat, lon));
+        }
+
         @JavascriptInterface
         public void requestLocation() {
             runOnUiThread(() -> requestBestLocation());
