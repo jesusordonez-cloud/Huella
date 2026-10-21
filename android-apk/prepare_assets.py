@@ -14,4 +14,4 @@ for name in ("index.html", "manifest.json", "sw.js"):
 
 shutil.copytree(repo / "icons", assets / "icons")
 
-print("Assets Huella Premium 4.1.3 preparados para Android")
+print("Assets Huella Premium 4.1.4 preparados para Android")
