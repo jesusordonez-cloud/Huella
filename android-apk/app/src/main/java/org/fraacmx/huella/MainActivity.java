@@ -8,10 +8,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Insets;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.View;
@@ -45,6 +49,8 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    private LocationManager locationManager;
+    private LocationListener activeLocationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,6 +223,115 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_PERMISSIONS) {
+            boolean locationGranted = Build.VERSION.SDK_INT < 23 ||
+                    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            if (locationGranted) requestBestLocation();
+        }
+    }
+
+    private void requestBestLocation() {
+        if (Build.VERSION.SDK_INT >= 23 &&
+                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestRuntimePermissions();
+            notifyLocationError("Permiso de ubicación pendiente");
+            return;
+        }
+
+        if (locationManager == null) {
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        }
+        if (locationManager == null) {
+            notifyLocationError("GPS no disponible");
+            return;
+        }
+
+        Location best = null;
+        try {
+            Location gps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location net = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (gps != null && net != null) best = gps.getAccuracy() <= net.getAccuracy() ? gps : net;
+            else best = gps != null ? gps : net;
+        } catch (SecurityException ignored) {
+        }
+
+        if (best != null) sendLocationToWeb(best);
+
+        if (activeLocationListener != null) {
+            try { locationManager.removeUpdates(activeLocationListener); } catch (Exception ignored) {}
+        }
+
+        activeLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                sendLocationToWeb(location);
+                try { locationManager.removeUpdates(this); } catch (Exception ignored) {}
+                activeLocationListener = null;
+            }
+
+            @Override public void onProviderEnabled(String provider) {}
+            @Override public void onProviderDisabled(String provider) {}
+            @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
+        };
+
+        boolean requested = false;
+        try {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER,
+                        0L,
+                        0f,
+                        activeLocationListener,
+                        Looper.getMainLooper()
+                );
+                requested = true;
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (!requested) {
+            try {
+                if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    locationManager.requestLocationUpdates(
+                            LocationManager.NETWORK_PROVIDER,
+                            0L,
+                            0f,
+                            activeLocationListener,
+                            Looper.getMainLooper()
+                    );
+                    requested = true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (!requested && best == null) notifyLocationError("Activa la ubicación del teléfono");
+    }
+
+    private void sendLocationToWeb(Location location) {
+        if (webView == null || location == null) return;
+        double lat = location.getLatitude();
+        double lon = location.getLongitude();
+        float acc = location.hasAccuracy() ? location.getAccuracy() : 0f;
+
+        String js = "window.HuellaNativeLocation&&window.HuellaNativeLocation(" +
+                lat + "," + lon + "," + acc + ");";
+        runOnUiThread(() -> webView.evaluateJavascript(js, null));
+    }
+
+    private void notifyLocationError(String message) {
+        if (webView == null) return;
+        String escaped = message.replace("\", "\\").replace("'", "\'");
+        String js = "window.HuellaNativeLocationError&&window.HuellaNativeLocationError('" +
+                escaped + "');";
+        runOnUiThread(() -> webView.evaluateJavascript(js, null));
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_FILE_CHOOSER && filePathCallback != null) {
@@ -234,12 +349,19 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (locationManager != null && activeLocationListener != null) {
+            try { locationManager.removeUpdates(activeLocationListener); } catch (Exception ignored) {}
+            activeLocationListener = null;
+        }
         if (webView != null) webView.onPause();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
+        if (locationManager != null && activeLocationListener != null) {
+            try { locationManager.removeUpdates(activeLocationListener); } catch (Exception ignored) {}
+        }
         if (webView != null) {
             webView.removeJavascriptInterface("HuellaAndroid");
             webView.destroy();
@@ -248,6 +370,11 @@ public class MainActivity extends Activity {
     }
 
     private class NativeBridge {
+        @JavascriptInterface
+        public void requestLocation() {
+            runOnUiThread(() -> requestBestLocation());
+        }
+
         @JavascriptInterface
         public void saveBlob(String fileName, String base64Data, String mimeType) {
             try {
@@ -275,7 +402,7 @@ public class MainActivity extends Activity {
 
     private String sanitizeFileName(String name) {
         if (name == null || name.trim().isEmpty()) return "Huella";
-        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
+        return name.replaceAll("[\\/:*?"<>|]", "_");
     }
 
     private void saveToDownloads(String fileName, byte[] data, String mimeType) throws Exception {
