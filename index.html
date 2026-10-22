@@ -145,7 +145,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
   <button class="menuItem hidden" id="flashItem"><svg viewBox="0 0 24 24"><path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z"/></svg><div><b>Flash continuo</b><small>Antorcha de la cámara</small></div><span class="value" id="flashValue">Apagado</span></button>
  </div>
  <div class="menuGroup">Mapa de evidencia</div>
- <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa offline</b><small>Preparar una zona antes de salir: hasta 200 km</small></div><span class="value">Abrir</span></button>
+ <button class="menuItem" id="offlineMapItem"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg><div><b>Mapa satelital offline</b><small>Preparar una zona satelital antes de salir: hasta 200 km</small></div><span class="value">Abrir</span></button>
  <div class="statusCard" style="margin-top:8px"><div><b>Vista integrada en la evidencia</b><small>Al cerrar el mapa, Huella guarda una vista para anexarla al pie de tus fotografías.</small></div><span class="statusDot" id="mapStatus">Listo</span></div>
  <div class="menuGroup" id="zoomLabel">Zoom disponible</div>
  <div class="zoomRow" id="zoomRow"></div>
@@ -156,7 +156,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
 </div></div>
 
 <div class="scrim" id="offlineMapSheet"><div class="sheet">
- <div class="sheetHandle"></div><h2>Mapa offline</h2><p>La zona se descarga dentro de Huella. No abre otra aplicación ni otra pantalla de Android.</p>
+ <div class="sheetHandle"></div><h2>Mapa satelital offline</h2><p>La imagen satelital se descarga dentro de Huella para usarla en campo sin conexión.</p>
  <div class="offlineMapView"><canvas id="offlineMapCanvas" width="900" height="560"></canvas><span class="offlineMapBadge" id="offlineMapBadge">GPS pendiente</span></div>
  <div class="statusCard"><div><b id="offlineMapTitle">Centro de descarga</b><small id="offlineMapCoords">Puedes usar tu GPS o escribir las coordenadas del sitio al que viajarás.</small></div><span class="statusDot" id="offlineMapState">Listo</span></div>
  <div class="menuGroup">Centro de la zona</div>
@@ -164,7 +164,7 @@ button,input,select{font:inherit}button{color:inherit}.hidden{display:none!impor
  <div class="sheetBtns" style="margin-top:8px"><button class="sheetBtn" id="useCurrentGps">Usar mi GPS actual</button></div>
  <div class="menuGroup">Área a descargar</div>
  <div class="radiusRow"><button class="radiusChoice on" data-map-radius="5">5 km</button><button class="radiusChoice" data-map-radius="10">10 km</button><button class="radiusChoice" data-map-radius="25">25 km</button><button class="radiusChoice" data-map-radius="50">50 km</button><button class="radiusChoice" data-map-radius="100">100 km</button><button class="radiusChoice" data-map-radius="200">200 km</button></div>
- <p style="font-size:9.5px;color:rgba(255,255,255,.52);margin-top:3px">En 100 y 200 km Huella reduce automáticamente el nivel de detalle para mantener una descarga offline manejable.</p>
+ <p style="font-size:9.5px;color:rgba(255,255,255,.52);margin-top:3px">En 100 y 200 km Huella reduce automáticamente el nivel de detalle satelital para mantener una descarga offline manejable. La capa global usa Sentinel-2 Cloudless 2016 de EOX.</p>
  <div class="mapProgress"><i id="offlineMapProgress"></i></div>
  <p id="offlineMapProgressText" style="margin-bottom:8px">Selecciona una zona para guardarla sin internet.</p>
  <div class="sheetBtns"><button class="sheetBtn" id="refreshMapView">Actualizar vista</button><button class="sheetBtn primary" id="downloadMapArea">Descargar zona</button></div>
@@ -268,7 +268,7 @@ function renderOfflineMapPanel(){
  if(nativeMapSnapshot){
   ctx.drawImage(nativeMapSnapshot,0,0,w,h);
   ctx.fillStyle='rgba(0,0,0,.44)';ctx.fillRect(0,h-34,w,34);
-  ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='18px system-ui';ctx.fillText('OpenFreeMap · © OpenStreetMap contributors',16,h-11);
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='18px system-ui';ctx.fillText('Sentinel-2 cloudless · EOX · Copernicus 2016',16,h-11);
   $('#offlineMapBadge').textContent='Vista de mapa';
  }else{drawOfflineLocator(ctx,w,h);$('#offlineMapBadge').textContent='Mapa preparado offline'}
  const t=getOfflineTarget();
@@ -510,7 +510,7 @@ async function renderMapPreview(){
  if(nativeMapSnapshot){
   ctx.drawImage(nativeMapSnapshot,0,0,w,h);
   ctx.fillStyle='rgba(0,0,0,.48)';ctx.fillRect(0,h-17,w,17);
-  ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='9px system-ui';ctx.fillText('OpenFreeMap · © OSM',5,h-5);
+  ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='9px system-ui';ctx.fillText('Sentinel-2 · EOX · 2016',5,h-5);
   return;
  }
  drawOfflineLocator(ctx,w,h);
@@ -578,7 +578,7 @@ function drawFooter(x,W,H,fh,map){
  if(map&&map.snapshot){
   x.drawImage(map.snapshot,mapX,mapY,mapW,mapH);
   x.fillStyle='rgba(0,0,0,.52)';x.fillRect(mapX,mapY+mapH-Math.max(18,mapH*.13),mapW,Math.max(18,mapH*.13));
-  x.fillStyle='rgba(255,255,255,.92)';x.font=Math.max(10,mapW*.035)+'px system-ui';x.fillText('OpenFreeMap · © OpenStreetMap',mapX+7,mapY+mapH-6);
+  x.fillStyle='rgba(255,255,255,.92)';x.font=Math.max(10,mapW*.035)+'px system-ui';x.fillText('Sentinel-2 cloudless · EOX · Copernicus 2016',mapX+7,mapY+mapH-6);
  }else{x.save();x.translate(mapX,mapY);drawOfflineLocator(x,mapW,mapH);x.restore()}
  x.restore();x.strokeStyle='rgba(255,255,255,.42)';x.lineWidth=1;roundRect(x,mapX,mapY,mapW,mapH,Math.max(12,mapW*.06));x.stroke();x.restore();
 }

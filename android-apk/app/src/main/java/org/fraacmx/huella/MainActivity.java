@@ -73,7 +73,7 @@ public class MainActivity extends FragmentActivity {
     private static final String PREFS_NAME = "huella_prefs";
     private static final String PREF_SAVE_TREE = "save_tree_uri";
     private static final String APP_URL = "https://appassets.androidplatform.net/assets/index.html?v=423";
-    private static final String MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+    private static final String MAP_STYLE_URL = "https://raw.githubusercontent.com/jesusordonez-cloud/Huella/main/satellite-style.json";
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -485,23 +485,23 @@ public class MainActivity extends FragmentActivity {
                 double minZoom;
                 double maxZoom;
                 if (safeRadius <= 5.0) {
-                    minZoom = 13.0;
-                    maxZoom = 16.0;
-                } else if (safeRadius <= 10.0) {
-                    minZoom = 12.0;
-                    maxZoom = 15.0;
-                } else if (safeRadius <= 25.0) {
-                    minZoom = 11.0;
-                    maxZoom = 14.0;
-                } else if (safeRadius <= 50.0) {
                     minZoom = 10.0;
                     maxZoom = 13.0;
-                } else if (safeRadius <= 100.0) {
+                } else if (safeRadius <= 10.0) {
                     minZoom = 9.0;
+                    maxZoom = 13.0;
+                } else if (safeRadius <= 25.0) {
+                    minZoom = 8.0;
                     maxZoom = 12.0;
-                } else {
+                } else if (safeRadius <= 50.0) {
                     minZoom = 8.0;
                     maxZoom = 11.0;
+                } else if (safeRadius <= 100.0) {
+                    minZoom = 7.0;
+                    maxZoom = 10.0;
+                } else {
+                    minZoom = 7.0;
+                    maxZoom = 9.0;
                 }
 
                 OfflineTilePyramidRegionDefinition definition =
@@ -611,7 +611,7 @@ public class MainActivity extends FragmentActivity {
                         .withCameraPosition(
                                 new CameraPosition.Builder()
                                         .target(new LatLng(lat, lon))
-                                        .zoom(15.5)
+                                        .zoom(13.0)
                                         .build()
                         );
 
